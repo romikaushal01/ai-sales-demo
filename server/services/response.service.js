@@ -1,4 +1,5 @@
-function buildResponse(filters, products) {
+function buildResponse(filters, products, total = products.length, isShowMore = false) {
+
   if (!products.length) {
     return {
       reply: "Sorry, I couldn't find any matching products.",
@@ -6,9 +7,9 @@ function buildResponse(filters, products) {
     };
   }
 
-  let reply = `I found ${products.length} matching product`;
+  let reply = `I found ${total} matching product`;
 
-  if (products.length > 1) {
+  if (total > 1) {
     reply += "s";
   }
 
@@ -34,11 +35,27 @@ function buildResponse(filters, products) {
     reply += ` for ${details.join(" ")}`;
   }
 
-  reply += ".";
+  // 👇 New UX
+  // Show More
+  if (isShowMore) {
+    return {
+      reply: `Showing the remaining ${products.length} product${products.length > 1 ? "s" : ""}.`,
+      products,
+      hasMore: false,
+    };
+  }
+
+  // First search
+  if (total > products.length) {
+    reply += `. Showing the first ${products.length}.`;
+  } else {
+    reply += ".";
+  }
 
   return {
     reply,
-    products: products.slice(0, 20),
+    products,
+    hasMore: total > products.length,
   };
 }
 

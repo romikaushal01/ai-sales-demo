@@ -144,6 +144,7 @@ async function getCatalog() {
 
   console.log("CATALOG LOADED");
   console.log(catalog);
+  console.log(catalog.vendorIndex);
 
   return catalog;
 }

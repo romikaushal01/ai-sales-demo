@@ -68,7 +68,8 @@ async function fetchShopifyProducts(filters = {}) {
     }
   );
 
-  const products =
+
+  let products =
   response.data.data.products.edges.map(({ node }) => ({
     title: node.title,
     vendor: node.vendor,
@@ -81,9 +82,17 @@ async function fetchShopifyProducts(filters = {}) {
     ),
   }));
 
+  // Apply price filter
+  if (typeof filters.maxPrice === "number") {
+    products = products.filter(
+      p => p.price <= filters.maxPrice
+    );
+  }
+
   console.log("FOUND PRODUCTS:", products.length);
 
   return products;
+
 }
 
 module.exports = fetchShopifyProducts;

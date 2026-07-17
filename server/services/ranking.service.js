@@ -67,8 +67,15 @@ function rankProducts(products, filters) {
       });
 
       // Price
-      if (filters.maxPrice && p.price <= filters.maxPrice) {
-        score += 50;
+      if (filters.maxPrice) {
+
+        // Reject products over budget
+        if (p.price > filters.maxPrice) {
+          score = -999;
+        } else {
+          score += 50;
+        }
+
       }
 
       return { ...p, score };

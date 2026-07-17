@@ -6,6 +6,9 @@ function getMemory(sessionId) {
 
 function updateMemory(sessionId, filters) {
   sessions[sessionId] = {
+    page: 1,
+    limit: 5,
+    lastResults: [],
     ...getMemory(sessionId),
     ...filters,
   };

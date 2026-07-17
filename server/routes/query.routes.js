@@ -53,14 +53,24 @@ router.post("/", async (req, res) => {
       // Parse query
       const filters = await parseQuery(message);
 
+      // Show more request
+      const isShowMore = [
+        "show more",
+        "more",
+        "next",
+      ].includes(text);
+
       // NEW SEARCH?
       if (
-        filters.brand ||
-        filters.productType ||
+        !isShowMore &&
         (
-          filters.keywords.length > 0 &&
-          !filters.brand &&
-          !filters.productType
+          filters.brand ||
+          filters.productType ||
+          (
+            filters.keywords.length > 0 &&
+            !filters.brand &&
+            !filters.productType
+          )
         )
       ) {
         clearMemory(sessionId);
@@ -69,6 +79,11 @@ router.post("/", async (req, res) => {
       // Read memory AFTER clearing
       const memory = getMemory(sessionId);
 
+      // Increase page for "show more"
+      if (isShowMore) {
+        memory.page = (memory.page || 1) + 1;
+      }
+
       // ✅ Merge
       const mergedFilters = mergeFilters(memory, filters);
 
@@ -76,6 +91,28 @@ router.post("/", async (req, res) => {
 
       console.log("MEMORY:", memory);
       console.log("MERGED FILTERS:", mergedFilters);
+
+      // Use cached results for "show more"
+      if (isShowMore && memory.lastResults.length) {
+
+        const start = (mergedFilters.page - 1) * mergedFilters.limit;
+        const end = start + mergedFilters.limit;
+
+        const paginated = memory.lastResults.slice(start, end);
+
+        console.log("SHOW MORE FROM CACHE");
+        console.log("CACHE SIZE:", memory.lastResults.length);
+        console.log("CACHE PAGE:", paginated.map(p => p.title));
+
+        return res.json(
+          buildResponse(
+            mergedFilters,
+            paginated,
+            memory.lastResults.length,
+            true
+          )
+        );
+      }
 
       // Fetch products
       let products = await fetchShopifyProducts(mergedFilters);
@@ -97,10 +134,27 @@ router.post("/", async (req, res) => {
       }
 
       // Rank
-      const ranked = rankProducts(products, mergedFilters)
+      const ranked = rankProducts(products, mergedFilters);
+
+      // Pagination
+      const start = (mergedFilters.page - 1) * mergedFilters.limit;
+      const end = start + mergedFilters.limit;
+
+      const paginated = ranked.slice(start, end);
+
+      console.log("RANKED:", ranked.length);
+      console.log("PAGINATED:", paginated.length);
+      console.log(paginated.map(p => p.title));
+
+
+      // Save ranked results in memory
+      updateMemory(sessionId, {
+        ...mergedFilters,
+        lastResults: ranked,
+      });
 
       return res.json(
-        buildResponse(mergedFilters, ranked)
+        buildResponse(mergedFilters, paginated, ranked.length, false)
       );
 
     }
