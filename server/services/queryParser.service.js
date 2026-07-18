@@ -46,6 +46,55 @@ function extractPrice(text) {
   return match ? Number(match[1]) : null;
 }
 
+function extractSort(text) {
+
+  text = text.toLowerCase();
+
+  // Cheapest
+  if (
+    text.includes("cheapest") ||
+    text.includes("lowest price") ||
+    text.includes("low to high") ||
+    text.includes("price low to high")
+  ) {
+    return "price-asc";
+  }
+
+  // Most Expensive
+  if (
+    text.includes("most expensive") ||
+    text.includes("highest price") ||
+    text.includes("high to low") ||
+    text.includes("price high to low")
+  ) {
+    return "price-desc";
+  }
+
+  return "";
+}
+
+function extractAvailability(text) {
+
+  text = text.toLowerCase();
+
+  if (
+    text.includes("in stock") ||
+    text.includes("available") ||
+    text.includes("only available")
+  ) {
+    return "in-stock";
+  }
+
+  if (
+    text.includes("out of stock") ||
+    text.includes("unavailable")
+  ) {
+    return "out-of-stock";
+  }
+
+  return "";
+}
+
 function extractKeywords(
   text,
   vendorIndex = {},
@@ -100,6 +149,8 @@ async function parseQuery(text = "") {
     ),
     color: extractColor(text),
     maxPrice: extractPrice(text),
+    sort: extractSort(text),
+    availability: extractAvailability(text),
     keywords: extractKeywords(
       text,
       catalog.vendorIndex,

@@ -1,9 +1,40 @@
 function buildResponse(filters, products, total = products.length, isShowMore = false) {
 
   if (!products.length) {
+
+    let reply = "Sorry, I couldn't find any matching products.";
+
+    const suggestions = [];
+
+    // Brand
+    if (filters.brand) {
+      suggestions.push(`View all ${filters.brand} products`);
+    }
+
+    // productType
+    if (filters.productType) {
+      suggestions.push(`Browse ${filters.productType}`);
+    }
+
+    // Budget
+    if (filters.maxPrice) {
+      suggestions.push(`Increase your budget`);
+    }
+
+    // Availability
+    if (filters.availability === "in-stock") {
+      suggestions.push("Show all products");
+    }
+
+    if (suggestions.length) {
+      reply += "\n\nTry:\n• " + suggestions.join("\n• ");
+    }
+
     return {
-      reply: "Sorry, I couldn't find any matching products.",
+      reply,
       products: [],
+      suggestions,
+      hasMore: false,
     };
   }
 

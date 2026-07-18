@@ -2,7 +2,7 @@ export const allProducts = [
   {
     title: "Nike Running Shoe",
     brand: "nike",
-    category: "shoe",
+    productType: "shoe",
     color: "black",
     price: 79,
     image: "https://picsum.photos/300/300?random=1",
@@ -11,7 +11,7 @@ export const allProducts = [
   {
     title: "Puma Runner",
     brand: "puma",
-    category: "shoe",
+    productType: "shoe",
     price: 69,
     image: "https://picsum.photos/300/300?random=2",
     color: "white",

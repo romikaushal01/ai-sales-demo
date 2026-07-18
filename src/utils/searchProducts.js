@@ -28,7 +28,7 @@ const searchTerm = userText
 
     const searchableText = normalizeText(`
       ${title}
-      ${category}
+      ${productType}
       ${color}
       ${brand}
     `);

@@ -2,7 +2,6 @@ const fetchShopifyProducts = require("./shopify.service");
 
 let catalog = null;
 
-console.log("Loading catalog...");
 const STOP_WORDS = [
   "the",
   "and",
@@ -26,8 +25,6 @@ async function getCatalog() {
 
   // Fetch all products
   const products = await fetchShopifyProducts({});
-
-  console.log("Products fetched:", products.length);
 
   const vendors = new Set();
   const productTypes = new Set();
@@ -141,10 +138,6 @@ async function getCatalog() {
 		colors: [...colors],
 		words: [...words],
 	};
-
-  console.log("CATALOG LOADED");
-  console.log(catalog);
-  console.log(catalog.vendorIndex);
 
   return catalog;
 }

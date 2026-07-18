@@ -29,6 +29,7 @@ async function fetchShopifyProducts(filters = {}) {
           title
           vendor
           productType
+          availableForSale
           tags
 
           images(first: 1) {
@@ -74,6 +75,7 @@ async function fetchShopifyProducts(filters = {}) {
     title: node.title,
     vendor: node.vendor,
     productType: node.productType,
+    availableForSale: node.availableForSale,
     tags: node.tags || [],
     description: node.description || "",
     image: node.images.edges[0]?.node.url || "",
@@ -88,6 +90,14 @@ async function fetchShopifyProducts(filters = {}) {
       p => p.price <= filters.maxPrice
     );
   }
+  console.log("RAW SHOPIFY PRODUCTS:");
+console.log(
+  response.data.data.products.edges.map(({ node }) => ({
+    title: node.title,
+    productType: node.productType,
+    price: node.variants.edges[0]?.node.price.amount,
+  }))
+);
 
   console.log("FOUND PRODUCTS:", products.length);
 

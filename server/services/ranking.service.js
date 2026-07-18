@@ -78,14 +78,46 @@ function rankProducts(products, filters) {
 
       }
 
+      // Availability
+      if (filters.availability === "in-stock") {
+
+        if (!p.availableForSale) {
+          score = -999;
+        }
+
+      }
+
+      if (filters.availability === "out-of-stock") {
+
+        if (p.availableForSale) {
+          score = -999;
+        }
+
+      }
+
       return { ...p, score };
     })
 
-    // 🔥 STEP 1: SORT FIRST
+    // STEP 1: Rank by score
     .sort((a, b) => b.score - a.score)
 
-    // 🔥 STEP 2: FILTER AFTER SORT (IMPORTANT)
-    .filter(p => p.score > 20);
+    // STEP 2: Keep only relevant products
+    .filter(p => p.score > 20)
+
+    // STEP 3: Apply user sorting
+    .sort((a, b) => {
+
+      if (filters.sort === "price-asc") {
+        return a.price - b.price;
+      }
+
+      if (filters.sort === "price-desc") {
+        return b.price - a.price;
+      }
+
+      // Default: keep ranking order
+      return 0;
+    });
 }
 
 module.exports = rankProducts;

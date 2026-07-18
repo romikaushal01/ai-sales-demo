@@ -89,9 +89,6 @@ router.post("/", async (req, res) => {
 
       updateMemory(sessionId, mergedFilters);
 
-      console.log("MEMORY:", memory);
-      console.log("MERGED FILTERS:", mergedFilters);
-
       // Use cached results for "show more"
       if (isShowMore && memory.lastResults.length) {
 
@@ -99,10 +96,6 @@ router.post("/", async (req, res) => {
         const end = start + mergedFilters.limit;
 
         const paginated = memory.lastResults.slice(start, end);
-
-        console.log("SHOW MORE FROM CACHE");
-        console.log("CACHE SIZE:", memory.lastResults.length);
-        console.log("CACHE PAGE:", paginated.map(p => p.title));
 
         return res.json(
           buildResponse(
@@ -117,20 +110,27 @@ router.post("/", async (req, res) => {
       // Fetch products
       let products = await fetchShopifyProducts(mergedFilters);
 
-      // Fallback 1
-      if (!products.length) {
+      // Don't fallback for strict filters like budget
+      if (
+        !products.length &&
+        !mergedFilters.maxPrice &&
+        !mergedFilters.availability
+      ) {
+
+        // Fallback 1
         products = await fetchShopifyProducts({
           ...mergedFilters,
           brand: "",
         });
-      }
 
-      // Fallback 2
-      if (!products.length) {
-        products = await fetchShopifyProducts({
-          brand: "",
-          category: "",
-        });
+        // Fallback 2
+        if (!products.length) {
+          products = await fetchShopifyProducts({
+            ...mergedFilters,
+            brand: "",
+            productType: "",
+          });
+        }
       }
 
       // Rank
@@ -141,11 +141,6 @@ router.post("/", async (req, res) => {
       const end = start + mergedFilters.limit;
 
       const paginated = ranked.slice(start, end);
-
-      console.log("RANKED:", ranked.length);
-      console.log("PAGINATED:", paginated.length);
-      console.log(paginated.map(p => p.title));
-
 
       // Save ranked results in memory
       updateMemory(sessionId, {
