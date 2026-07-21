@@ -1,4 +1,21 @@
 function rankProducts(products, filters) {
+
+  // Only availability filter (no search query)
+const onlyAvailability =
+  filters.availability &&
+  !filters.brand &&
+  !filters.productType &&
+  !filters.color &&
+  filters.maxPrice === null &&
+  (!filters.keywords || filters.keywords.length === 0);
+
+if (onlyAvailability) {
+  return products.filter(p =>
+    filters.availability === "in-stock"
+      ? p.availableForSale
+      : !p.availableForSale
+  );
+}
   return products
     .map(p => {
       let score = 0;
@@ -102,7 +119,24 @@ function rankProducts(products, filters) {
     .sort((a, b) => b.score - a.score)
 
     // STEP 2: Keep only relevant products
-    .filter(p => p.score > 20)
+    .filter(p => {
+
+        const onlySorting =
+          filters.sort &&
+          !filters.brand &&
+          !filters.productType &&
+          !filters.color &&
+          !filters.maxPrice &&
+          !filters.availability &&
+          filters.keywords.length === 0;
+
+        if (onlySorting) {
+          return true;
+        }
+
+        return p.score > 20;
+
+      })
 
     // STEP 3: Apply user sorting
     .sort((a, b) => {

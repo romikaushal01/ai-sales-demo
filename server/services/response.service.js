@@ -2,8 +2,6 @@ function buildResponse(filters, products, total = products.length, isShowMore = 
 
   if (!products.length) {
 
-    let reply = "Sorry, I couldn't find any matching products.";
-
     const suggestions = [];
 
     // Brand
@@ -26,22 +24,30 @@ function buildResponse(filters, products, total = products.length, isShowMore = 
       suggestions.push("Show all products");
     }
 
-    if (suggestions.length) {
-      reply += "\n\nTry:\n• " + suggestions.join("\n• ");
-    }
-
     return {
-      reply,
+      reply: "Sorry, I couldn't find any matching products.",
       products: [],
       suggestions,
       hasMore: false,
     };
   }
 
-  let reply = `I found ${total} matching product`;
+  let reply = "";
 
-  if (total > 1) {
-    reply += "s";
+  if (filters.sort === "best-selling") {
+    reply = `⭐ Here are our ${total} best-selling product${total > 1 ? "s" : ""}`;
+  }
+  else if (filters.sort === "new") {
+    reply = `🆕 Here are ${total} new arrival${total > 1 ? "s" : ""}`;
+  }
+  else if (filters.availability === "in-stock") {
+    reply = `✅ Here ${total > 1 ? "are" : "is"} ${total} product${total > 1 ? "s" : ""} currently in stock`;
+  }
+  else if (filters.maxPrice) {
+    reply = `💰 I found ${total} product${total > 1 ? "s" : ""} under $${filters.maxPrice}`;
+  }
+  else {
+    reply = `I found ${total} matching product${total > 1 ? "s" : ""}`;
   }
 
   const details = [];
@@ -62,7 +68,12 @@ function buildResponse(filters, products, total = products.length, isShowMore = 
     details.push(`under ${filters.maxPrice}`);
   }
 
-  if (details.length) {
+  if (
+    details.length &&
+    !filters.sort &&
+    !filters.availability &&
+    !filters.maxPrice
+  ) {
     reply += ` for ${details.join(" ")}`;
   }
 
@@ -70,9 +81,9 @@ function buildResponse(filters, products, total = products.length, isShowMore = 
   // Show More
   if (isShowMore) {
     return {
-      reply: `Showing the remaining ${products.length} product${products.length > 1 ? "s" : ""}.`,
+      reply: `Showing ${products.length} more product${products.length > 1 ? "s" : ""}.`,
       products,
-      hasMore: false,
+      hasMore: total > (filters.page * filters.limit),
     };
   }
 
@@ -86,7 +97,7 @@ function buildResponse(filters, products, total = products.length, isShowMore = 
   return {
     reply,
     products,
-    hasMore: total > products.length,
+    hasMore: total > (filters.page * filters.limit),
   };
 }
 

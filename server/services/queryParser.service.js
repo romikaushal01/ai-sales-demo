@@ -38,17 +38,35 @@ function extractColor(text) {
 }
 
 function extractPrice(text) {
-  const match =
-    text.match(/under\s+(\d+)/i) ||
-    text.match(/below\s+(\d+)/i) ||
-    text.match(/less than\s+(\d+)/i);
+  const match = text.match(
+    /(under|below|less than)\s*[$₹£€]?\s*(\d+)/i
+  );
 
-  return match ? Number(match[1]) : null;
+  return match ? Number(match[2]) : null;
 }
 
 function extractSort(text) {
 
   text = text.toLowerCase();
+
+  // Best Sellers
+  if (
+    text.includes("best seller") ||
+    text.includes("best sellers") ||
+    text.includes("best selling")
+  ) {
+    return "best-selling";
+  }
+
+  // New Arrivals
+  if (
+    text.includes("new arrival") ||
+    text.includes("new arrivals") ||
+    text.includes("newest") ||
+    text.includes("latest")
+  ) {
+    return "new";
+  }
 
   // Cheapest
   if (
@@ -96,22 +114,48 @@ function extractAvailability(text) {
 }
 
 function extractKeywords(
+  
   text,
   vendorIndex = {},
   productTypes = []
 ) {
-  const ignoreWords = [
-    "under",
-    "below",
-    "less",
-    "than",
-    "for",
-    "with",
-    "and",
-    "the",
-    "a",
-    "an",
-  ];
+if (
+  extractSort(text) ||
+  extractAvailability(text)
+  ) {
+  return [];
+}
+const ignoreWords = [
+  "under",
+  "below",
+  "less",
+  "than",
+  "for",
+  "with",
+  "and",
+  "the",
+  "a",
+  "an",
+
+  // Sorting words
+  "best",
+  "seller",
+  "sellers",
+  "selling",
+  "new",
+  "arrival",
+  "arrivals",
+  "newest",
+  "latest",
+  "cheapest",
+  "lowest",
+  "highest",
+  "price",
+  "low",
+  "high",
+  "stock",
+  "available",
+];
 
   const brand = extractBrand(text, vendorIndex);
   const productType = extractProductType(text, productTypes);

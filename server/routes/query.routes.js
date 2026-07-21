@@ -134,7 +134,13 @@ router.post("/", async (req, res) => {
       }
 
       // Rank
-      const ranked = rankProducts(products, mergedFilters);
+      const ranked =
+      mergedFilters.sort &&
+      !mergedFilters.brand &&
+      !mergedFilters.productType &&
+      (!mergedFilters.keywords || mergedFilters.keywords.length === 0)
+        ? products
+        : rankProducts(products, mergedFilters);
 
       // Pagination
       const start = (mergedFilters.page - 1) * mergedFilters.limit;

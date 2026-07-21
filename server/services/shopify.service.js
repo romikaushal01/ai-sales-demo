@@ -17,21 +17,50 @@ function buildSearchQuery(filters = {}) {
 }
 
 async function fetchShopifyProducts(filters = {}) {
+
   const searchQuery = buildSearchQuery(filters);
 
-  console.log("SHOPIFY QUERY:", searchQuery || "(all products)");
+  let sortKey = "";
+  let reverse = "";
 
+  switch (filters.sort) {
+    case "best-selling":
+      sortKey = ", sortKey: BEST_SELLING";
+      break;
+
+    case "new":
+    sortKey = ", sortKey: CREATED_AT";
+    reverse = ", reverse: true";
+    break;
+
+    case "price-asc":
+      sortKey = ", sortKey: PRICE";
+      break;
+
+    case "price-desc":
+      sortKey = ", sortKey: PRICE";
+      reverse = ", reverse: true";
+      break;
+  }
+  
   const graphqlQuery = `
   {
-    products(first: 30, query: "${searchQuery}") {
+    products(
+      first: 30,
+      query: "${searchQuery}"
+      ${sortKey}
+      ${reverse}
+    ) {
       edges {
         node {
           title
+          handle
           vendor
+          onlineStoreUrl
           productType
           availableForSale
           tags
-
+          description
           images(first: 1) {
             edges {
               node {
@@ -69,20 +98,26 @@ async function fetchShopifyProducts(filters = {}) {
     }
   );
 
-
+  // 👇 ADD THIS
+  
   let products =
-  response.data.data.products.edges.map(({ node }) => ({
-    title: node.title,
-    vendor: node.vendor,
-    productType: node.productType,
-    availableForSale: node.availableForSale,
-    tags: node.tags || [],
-    description: node.description || "",
-    image: node.images.edges[0]?.node.url || "",
-    price: Number(
-      node.variants.edges[0]?.node.price.amount || 0
-    ),
-  }));
+  
+    response.data.data.products.edges.map(({ node }) => ({
+      title: node.title,
+      vendor: node.vendor,
+      productType: node.productType,
+      availableForSale: node.availableForSale,
+      tags: node.tags || [],
+      description: node.description || "",
+      handle: node.handle,
+      url:
+        node.onlineStoreUrl ||
+        `https://${process.env.SHOPIFY_STORE_DOMAIN}/products/${node.handle}`,
+      image: node.images.edges[0]?.node.url || "",
+      price: Number(
+        node.variants.edges[0]?.node.price.amount || 0
+      ),
+    }));
 
   // Apply price filter
   if (typeof filters.maxPrice === "number") {
@@ -90,16 +125,7 @@ async function fetchShopifyProducts(filters = {}) {
       p => p.price <= filters.maxPrice
     );
   }
-  console.log("RAW SHOPIFY PRODUCTS:");
-console.log(
-  response.data.data.products.edges.map(({ node }) => ({
-    title: node.title,
-    productType: node.productType,
-    price: node.variants.edges[0]?.node.price.amount,
-  }))
-);
 
-  console.log("FOUND PRODUCTS:", products.length);
 
   return products;
 

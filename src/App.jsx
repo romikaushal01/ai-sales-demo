@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import { searchProducts } from "./utils/searchProducts";
 
 export default function App() {
-  const [isTyping, setIsTyping] = useState(false);
+
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   const [sessionId] = useState(() => {
   let id = localStorage.getItem("chat_session");
@@ -16,109 +19,209 @@ export default function App() {
 
     return id;
   });
+
   const [messages, setMessages] = useState([
     {
       sender: "ai",
-      text: "Hi! What product are you looking for today?",
+      text: "👋 Welcome to AI Shopping Assistant!\n\nI can help you find products in this store.",
+      suggestions: [
+        {
+          label: "🔥 Best Sellers",
+          value: "best sellers",
+        },
+        {
+          label: "🆕 New Arrivals",
+          value: "new arrivals",
+        },
+        {
+          label: "💰 Under $50",
+          value: "under $50",
+        },
+        {
+          label: "✅ In Stock",
+          value: "in stock",
+        },
+      ],
     },
   ]);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages, loading]);
+
   const [products, setProducts] = useState([]);
 
-  const handleSend = async () => {
-    if (!message.trim()) return;
+  const handleSend = async (customMessage = null) => {
+    const text = customMessage || message;
 
-    const userMessage = {
-      sender: "user",
-      text: message,
-    };
+    if (!text.trim()) return;
 
-    // ✅ 1. show user message first
-    setMessages((prev) => [...prev, userMessage]);
+    if (text !== "show more") {
+      const userMessage = {
+        sender: "user",
+        text,
+      };
 
+      setMessages(prev => [...prev, userMessage]);
+    }
+
+    setLoading(true);
     setMessage("");
 
-    const res = await fetch("http://localhost:5000/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        sessionId,
-        message,
-      }),
-    });
+    try {
+      const res = await fetch("http://localhost:5000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sessionId,
+          message: text,
+        }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    const aiMessage = {
-      sender: "ai",
-      text: data.reply,
-      products: data.products,
-    };
+      const aiMessage = {
+        sender: "ai",
+        text: data.reply,
+        products: data.products,
+        suggestions: data.suggestions || [],
+        hasMore: data.hasMore || false,
+      };
 
-    // ✅ 2. show AI message
-    setMessages((prev) => [...prev, aiMessage]);
+      setMessages(prev => [...prev, aiMessage]);
 
-    setIsTyping(false);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);   // ✅ Hamesha yahin
+    }
+
   };
-
   return (
     <div className="chat-app">
-      <div className="chat-section">
-        <div className="header">AI Sales Assistant</div>
+      {isOpen && (
 
-        <div className="messages">
-          {messages.map((msg, index) => (
-            <div key={index}
-              className={`message ${msg.sender}`}
-            >
-              {msg.text}
+        <>
+          <div className="chat-window">
+            <div className="header">AI Sales Assistant</div>
 
-              {msg.sender === "ai" && (
-                <>
-                  {msg.products?.length > 0 ? (
-                    <div className="chat-products">
-                      {msg.products.map((product, i) => (
-                        <div key={i} className="chat-product-card">
-                          <img src={product.image || "https://via.placeholder.com/150"} />
-                          <h4>{product.title}</h4>
-                          <p>${product.price}</p>
+            <div className="messages">
+              {messages.map((msg, index) => (
+                <div key={index}
+                  className={`message ${msg.sender}`}
+                >
+                  {msg.text}
+
+                  {msg.sender === "ai" && (
+                    <>
+                      {/* Products */}
+                      {msg.products?.length > 0 ? (
+                        <div className="chat-products">
+                          {msg.products.map((product, i) => (
+                            <div key={i} className="chat-product-card">
+
+                              <img
+                                src={product.image || "https://via.placeholder.com/150"}
+                                alt={product.title}
+                              />
+
+                              <h4>{product.title}</h4>
+
+                              <p className="product-brand">
+                                {product.vendor}
+                              </p>
+
+                              <p className="product-price">
+                                ${product.price}
+                              </p>
+
+                              <a
+                                href={product.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="view-product-btn"
+                              >
+                                View Product
+                              </a>
+
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  ) : msg.type === "empty" ? (
-                    <p className="no-products">No products found 😕</p>
-                  ) : null}
-                </>
+                      ) : msg.type === "empty" ? (
+                        <p className="no-products">No products found 😕</p>
+                      ) : null}
+
+                      {/* Suggestions */}
+                      {msg.suggestions?.length > 0 && (
+                        <div className="chat-suggestions">
+                          {msg.suggestions.map((suggestion, i) => (
+                            <button
+                              key={i}
+                              className="suggestion-chip"
+                              onClick={() => handleSend(suggestion.value || suggestion)}
+                            >
+                            {suggestion.label || suggestion}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Show More */}
+                      {msg.hasMore && index === messages.length - 1 && (
+                        <button
+                          className="show-more-btn"
+                          onClick={() => handleSend("show more")}
+                        >
+                          Show More
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
+              {loading && (
+                <div className="message ai typing">
+                  Searching products...
+                </div>
               )}
+              <div ref={messagesEndRef}></div>
             </div>
-          ))}
-          {isTyping && (
-            <div className="message ai">
-              AI is typing...
+
+            <div className="input-area">
+              <input
+                type="text"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !loading) {
+                    handleSend();
+                  }
+                }}
+                placeholder="Ask about products..."
+                disabled={loading}
+              />
+
+              <button
+                onClick={() => handleSend()}
+                disabled={loading}
+              >
+                {loading ? "Sending..." : "Send"}
+              </button>
             </div>
-          )}
-        </div>
+          </div>
+        </>
 
-        <div className="input-area">
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSend();
-              }
-            }}
-            placeholder="Ask about products..."
-          />
-
-          <button onClick={handleSend}>
-            Send
-          </button>
-        </div>
-      </div>
+      )}
+      <button
+        className="chat-toggle"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {isOpen ? "✕" : "💬"}
+      </button>
     </div>
   );
 }
