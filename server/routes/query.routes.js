@@ -12,6 +12,10 @@ const {
   clearMemory,
 } = require("../services/memory.service");
 
+const {
+  detectConversation,
+} = require("../services/conversation.service");
+
 const mergeFilters = require("../services/mergeFilters.service");
 
 
@@ -40,11 +44,51 @@ router.post("/", async (req, res) => {
 
       const text = (message || "").toLowerCase().trim();
 
-      // Greeting
-      if (["hi", "hello", "hey"].includes(text)) {
+      const conversation = detectConversation(text);
+
+      const memory = getMemory(sessionId);
+
+      // User said YES
+      if (
+        conversation &&
+        conversation.type === "yes" &&
+        memory.pendingAction === "show-best-sellers"
+      ) {
+
+        clearMemory(sessionId);
+
+        const filters = {
+          brand: "",
+          productType: "",
+          color: "",
+          maxPrice: null,
+          availability: "",
+          sort: "best-selling",
+          keywords: [],
+          page: 1,
+          limit: 5,
+        };
+
+        const products = await fetchShopifyProducts(filters);
+
+        const paginated = products.slice(0, filters.limit);
+
+        updateMemory(sessionId, {
+          ...filters,
+          lastResults: products,
+        });
+
+        return res.json(
+          buildResponse(filters, paginated, products.length, false)
+        );
+      }
+
+      if (conversation && conversation.reply) {
         return res.json({
-          reply: "Hi 👋 What product are you looking for today?",
+          reply: conversation.reply,
           products: [],
+          suggestions: [],
+          hasMore: false,
         });
       }
 
@@ -75,9 +119,6 @@ router.post("/", async (req, res) => {
       ) {
         clearMemory(sessionId);
       }
-
-      // Read memory AFTER clearing
-      const memory = getMemory(sessionId);
 
       // Increase page for "show more"
       if (isShowMore) {
@@ -149,14 +190,21 @@ router.post("/", async (req, res) => {
       const paginated = ranked.slice(start, end);
 
       // Save ranked results in memory
+      const response = buildResponse(
+        mergedFilters,
+        paginated,
+        ranked.length,
+        false
+      );
+
+      // ✅ Save AFTER buildResponse
       updateMemory(sessionId, {
         ...mergedFilters,
         lastResults: ranked,
+        pendingAction: response.pendingAction || "",
       });
 
-      return res.json(
-        buildResponse(mergedFilters, paginated, ranked.length, false)
-      );
+      return res.json(response);
 
     }
 

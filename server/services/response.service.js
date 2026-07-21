@@ -1,3 +1,7 @@
+function capitalize(text = "") {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 function buildResponse(filters, products, total = products.length, isShowMore = false) {
 
   if (!products.length) {
@@ -6,17 +10,17 @@ function buildResponse(filters, products, total = products.length, isShowMore = 
 
     // Brand
     if (filters.brand) {
-      suggestions.push(`View all ${filters.brand} products`);
+      suggestions.push(`👟 View all ${capitalize(filters.brand)} products`);
     }
 
     // productType
-    if (filters.productType) {
-      suggestions.push(`Browse ${filters.productType}`);
+    if (filters.productType && !filters.brand) {
+      suggestions.push(`👟 Browse all ${filters.productType}`);
     }
 
     // Budget
     if (filters.maxPrice) {
-      suggestions.push(`Increase your budget`);
+      suggestions.push("💰 Increase your budget");
     }
 
     // Availability
@@ -24,10 +28,14 @@ function buildResponse(filters, products, total = products.length, isShowMore = 
       suggestions.push("Show all products");
     }
 
+    suggestions.push("⭐ Best Sellers");
+    suggestions.push("🆕 Latest Arrivals");
+
     return {
-      reply: "Sorry, I couldn't find any matching products.",
+      reply: "😕 I couldn't find any matching products. Would you like to see our Best Sellers instead?",
       products: [],
       suggestions,
+      pendingAction: "show-best-sellers",
       hasMore: false,
     };
   }

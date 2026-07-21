@@ -50,6 +50,7 @@ function mergeFilters(memory = {}, filters = {}) {
     limit: memory.limit || 5,
 
     lastResults: memory.lastResults || [],
+    
   };
 }
 
