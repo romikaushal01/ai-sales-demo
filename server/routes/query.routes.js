@@ -52,6 +52,8 @@ router.post("/", async (req, res) => {
 
       const followUp = detectFollowUp(text);
 
+      console.log("FOLLOW UP:", followUp);
+
       // Follow-up questions
       if (followUp && memory.lastResults?.length) {
 
@@ -112,6 +114,46 @@ router.post("/", async (req, res) => {
             products: [recommended],
             suggestions: [],
             hasMore: false,
+          });
+        }
+
+        // Compare Products
+        if (followUp.type === "compare") {
+
+          if (!memory.lastResults || memory.lastResults.length < 2) {
+            return res.json({
+              reply: "I need at least two products to compare. 😊",
+              products: memory.lastResults || [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const first = memory.lastResults[0];
+          const second = memory.lastResults[1];
+
+          return res.json({
+            reply: `📊 Product Comparison
+
+            🥇 ${first.title}
+            💲 Price: $${first.price}
+            🏷 Brand: ${first.vendor}
+
+            🆚
+
+            🥈 ${second.title}
+            💲 Price: $${second.price}
+            🏷 Brand: ${second.vendor}
+
+            💡 Recommendation
+
+            💰 ${first.title} offers better value for money.
+            ✨ ${second.title} is the more premium option.`,
+            
+                products: [first, second],
+                messageType: "comparison",
+                suggestions: [],
+                hasMore: false,
           });
         }
 

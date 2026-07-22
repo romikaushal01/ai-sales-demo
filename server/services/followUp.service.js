@@ -31,6 +31,18 @@ function detectFollowUp(text) {
 		};
 	}
 
+  // Compare Products
+  if (
+    text.includes("compare") ||
+    text.includes("compare first two") ||
+    text.includes("compare first and second") ||
+    text.includes("compare the first two")
+  ) {
+    return {
+      type: "compare",
+    };
+  }
+
   return null;
 }
 

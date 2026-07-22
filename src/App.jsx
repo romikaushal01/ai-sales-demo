@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import { searchProducts } from "./utils/searchProducts";
@@ -90,6 +91,7 @@ export default function App() {
         products: data.products,
         suggestions: data.suggestions || [],
         hasMore: data.hasMore || false,
+        messageType: data.messageType || "",
       };
 
       setMessages(prev => [...prev, aiMessage]);
@@ -111,11 +113,19 @@ export default function App() {
 
             <div className="messages">
               {messages.map((msg, index) => (
-                <div key={index}
-                  className={`message ${msg.sender}`}
+                <div
+                  key={index}
+                  className={`message ${msg.sender} ${
+                    msg.messageType === "comparison" ? "comparison-message" : ""
+                  }`}
                 >
-                  {msg.text}
-
+                  <div>
+                    {msg.messageType === "comparison"
+                      ? msg.text.split("\n").map((line, i) => (
+                          <div key={i}>{line}</div>
+                        ))
+                      : msg.text}
+                  </div>
                   {msg.sender === "ai" && (
                     <>
                       {/* Products */}
