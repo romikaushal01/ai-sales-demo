@@ -18,6 +18,8 @@ const {
 
 const mergeFilters = require("../services/mergeFilters.service");
 
+const detectFollowUp = require("../services/followUp.service");
+
 
 const USE_AI = false;
 
@@ -47,6 +49,73 @@ router.post("/", async (req, res) => {
       const conversation = detectConversation(text);
 
       const memory = getMemory(sessionId);
+
+      const followUp = detectFollowUp(text);
+
+      // Follow-up questions
+      if (followUp && memory.lastResults?.length) {
+
+        // Cheapest
+        if (followUp.type === "cheapest") {
+
+          const cheapest = [...memory.lastResults].sort(
+            (a, b) => Number(a.price) - Number(b.price)
+          )[0];
+
+          return res.json({
+            reply: `💰 The cheapest option is ${cheapest.title}.`,
+            products: [cheapest],
+            suggestions: [],
+            hasMore: false,
+          });
+        }
+
+        // Most Expensive
+        if (followUp.type === "most-expensive") {
+
+          const expensive = [...memory.lastResults].sort(
+            (a, b) => Number(b.price) - Number(a.price)
+          )[0];
+
+          return res.json({
+            reply: `💎 The most expensive option is ${expensive.title}.`,
+            products: [expensive],
+            suggestions: [],
+            hasMore: false,
+          });
+        }
+
+        // Recommend
+        if (followUp.type === "recommend") {
+
+          let recommended = memory.lastResults[0];
+
+          // Prefer exact brand match
+          if (memory.brand) {
+
+            const exactBrand = memory.lastResults.find(
+              p =>
+                p.vendor &&
+                p.vendor.toLowerCase().includes(
+                  memory.brand.toLowerCase()
+                )
+            );
+
+            if (exactBrand) {
+              recommended = exactBrand;
+            }
+
+          }
+
+          return res.json({
+            reply: `⭐ My recommendation is ${recommended.title}. It's one of the best matches based on what you're looking for.`,
+            products: [recommended],
+            suggestions: [],
+            hasMore: false,
+          });
+        }
+
+      }
 
       // User said YES
       if (
