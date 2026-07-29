@@ -116,11 +116,15 @@ export default function App() {
                 <div
                   key={index}
                   className={`message ${msg.sender} ${
-                    msg.messageType === "comparison" ? "comparison-message" : ""
+                    msg.messageType === "comparison" ||
+                    msg.messageType === "details"
+                      ? "comparison-message"
+                      : ""
                   }`}
                 >
                   <div>
-                    {msg.messageType === "comparison"
+                    {msg.messageType === "comparison" ||
+                      msg.messageType === "details"
                       ? msg.text.split("\n").map((line, i) => (
                           <div key={i}>{line}</div>
                         ))

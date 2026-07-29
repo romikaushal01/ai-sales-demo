@@ -23,6 +23,7 @@ function mergeFilters(memory = {}, filters = {}) {
       page: 1,
       limit: 5,
       lastResults: [],
+      originalResults: [],
     };
   }
 
@@ -50,7 +51,9 @@ function mergeFilters(memory = {}, filters = {}) {
     limit: memory.limit || 5,
 
     lastResults: memory.lastResults || [],
-    
+
+    // ✅ ADD THIS
+    originalResults: memory.originalResults || [],
   };
 }
 

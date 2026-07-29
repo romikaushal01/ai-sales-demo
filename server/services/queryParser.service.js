@@ -28,13 +28,63 @@ function extractColor(text) {
   const colors = [
     "black",
     "white",
-    "red",
+
     "blue",
+    "navy",
+    "sky blue",
+    "light blue",
+    "dark blue",
+
+    "red",
+    "maroon",
+    "burgundy",
+
     "green",
+    "olive",
+    "lime",
+
     "yellow",
+    "gold",
+    "mustard",
+
+    "orange",
+    "peach",
+
+    "purple",
+    "violet",
+    "lavender",
+
+    "pink",
+    "hot pink",
+
+    "brown",
+    "tan",
+    "beige",
+    "cream",
+
+    "grey",
+    "gray",
+    "silver",
+    "charcoal",
+
+    "multicolor",
+    "multi color",
+
+    "cyan",
+    "teal",
+    "turquoise",
+
+    "magenta",
+
+    "khaki",
+    "coffee",
+    "ivory",
+    "mint",
   ];
 
-  return colors.find((c) => text.includes(c)) || "";
+  return colors.find((c) =>
+    text.toLowerCase().includes(c.toLowerCase())
+  ) || "";
 }
 
 function extractPrice(text) {

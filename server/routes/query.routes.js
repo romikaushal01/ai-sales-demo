@@ -157,6 +157,99 @@ router.post("/", async (req, res) => {
           });
         }
 
+        // Product Details
+        if (followUp.type === "details") {
+
+          if (!memory.lastResults || memory.lastResults.length === 0) {
+            return res.json({
+              reply: "I couldn't find any previous products.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          let product = memory.lastResults[0];
+
+          // User asked about second product
+          if (text.includes("second")) {
+            product = memory.lastResults[1] || product;
+          }
+
+          const category = product.productType
+            ? product.productType
+                .split(" ")
+                .map(
+                  word =>
+                    word.charAt(0).toUpperCase() +
+                    word.slice(1)
+                )
+                .join(" ")
+            : "N/A";
+
+          return res.json({
+            reply: `📦 ${product.title}
+
+        💲 Price: $${product.price}
+
+        🏷 Brand: ${product.vendor}
+
+        📂 Category: ${category}
+
+        ${product.availableForSale ? "✅ In Stock" : "❌ Out of Stock"}
+
+        📝 Description
+
+        ${product.description || "Product details are currently unavailable."}`,
+
+            products: [product],
+            messageType: "details",
+            suggestions: [],
+            hasMore: false,
+          });
+
+        }
+        // Color Filter
+        if (followUp.type === "color-filter") {
+
+          if (!memory.lastResults || memory.lastResults.length === 0) {
+            return res.json({
+              reply: "Please search for products first.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+          memory.originalResults.forEach(product => {
+          });
+          const filtered = memory.originalResults.filter(product =>
+            product.colors?.includes(followUp.color)
+          );
+
+          if (!filtered.length) {
+            return res.json({
+              reply: `🎨 Here ${filtered.length > 1 ? "are" : "is"} ${filtered.length} ${followUp.color} product${filtered.length > 1 ? "s" : ""}.`,
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          // Update memory with filtered results
+          updateMemory(sessionId, {
+            ...memory,
+            lastResults: filtered,
+          });
+
+          return res.json({
+            reply: `🎨 I found ${filtered.length} ${followUp.color} product${filtered.length > 1 ? "s" : ""}.`,
+            products: filtered.slice(0, 5),
+            suggestions: [],
+            hasMore: filtered.length > 5,
+          });
+
+        }
+
       }
 
       // User said YES
@@ -186,6 +279,7 @@ router.post("/", async (req, res) => {
 
         updateMemory(sessionId, {
           ...filters,
+          originalResults: products,
           lastResults: products,
         });
 
@@ -308,9 +402,10 @@ router.post("/", async (req, res) => {
         false
       );
 
-      // ✅ Save AFTER buildResponse
+     // ✅ Save AFTER buildResponse
       updateMemory(sessionId, {
         ...mergedFilters,
+        originalResults: ranked,
         lastResults: ranked,
         pendingAction: response.pendingAction || "",
       });

@@ -69,12 +69,17 @@ async function fetchShopifyProducts(filters = {}) {
             }
           }
 
-          variants(first: 1) {
+          variants(first: 20) {
             edges {
               node {
                 price {
                   amount
                   currencyCode
+                }
+
+                selectedOptions {
+                  name
+                  value
                 }
               }
             }
@@ -116,6 +121,11 @@ async function fetchShopifyProducts(filters = {}) {
       image: node.images.edges[0]?.node.url || "",
       price: Number(
         node.variants.edges[0]?.node.price.amount || 0
+      ),
+      colors: node.variants.edges.flatMap(({ node: variant }) =>
+        variant.selectedOptions
+          .filter(option => option.name.toLowerCase() === "color")
+          .map(option => option.value.toLowerCase())
       ),
     }));
 

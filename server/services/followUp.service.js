@@ -31,6 +31,98 @@ function detectFollowUp(text) {
 		};
 	}
 
+  // Color Filter
+  const colors = [
+    "black",
+    "white",
+    "blue",
+    "navy",
+    "sky blue",
+    "light blue",
+    "dark blue",
+
+    "red",
+    "maroon",
+    "burgundy",
+
+    "green",
+    "olive",
+    "lime",
+
+    "yellow",
+    "gold",
+    "mustard",
+
+    "orange",
+    "peach",
+
+    "purple",
+    "violet",
+    "lavender",
+
+    "pink",
+    "hot pink",
+
+    "brown",
+    "tan",
+    "beige",
+    "cream",
+
+    "grey",
+    "gray",
+    "silver",
+
+    "charcoal",
+
+    "multicolor",
+    "multi color",
+
+    "cyan",
+    "teal",
+    "turquoise",
+
+    "magenta",
+
+    "khaki",
+
+    "coffee",
+
+    "ivory",
+
+    "mint",
+  ];
+
+  const selectedColor = colors.find(color =>
+    text.toLowerCase().includes(color.toLowerCase())
+  );
+
+  if (
+    selectedColor &&
+    (
+      text.startsWith("only") ||
+      text.includes("show only") ||
+      text.includes("filter")
+    )
+  ) {
+    return {
+      type: "color-filter",
+      color: selectedColor,
+    };
+  }
+
+  // Product Details
+  if (
+    text.includes("tell me more") ||
+    text.includes("more about") ||
+    text.includes("details") ||
+    text.includes("first one") ||
+    text.includes("second one")
+  ) {
+    return {
+      type: "details",
+    };
+  }
+
   // Compare Products
   if (
     text.includes("compare") ||

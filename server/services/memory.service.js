@@ -9,6 +9,7 @@ function updateMemory(sessionId, filters) {
     page: 1,
     limit: 5,
     lastResults: [],
+    originalResults: [],
     ...getMemory(sessionId),
     ...filters,
   };
