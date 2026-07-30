@@ -52,8 +52,6 @@ router.post("/", async (req, res) => {
 
       const followUp = detectFollowUp(text);
 
-      console.log("FOLLOW UP:", followUp);
-
       // Follow-up questions
       if (followUp && memory.lastResults?.length) {
 
@@ -248,6 +246,48 @@ router.post("/", async (req, res) => {
             hasMore: filtered.length > 5,
           });
 
+        }
+        // Size Filter
+        if (followUp.type === "size-filter") {
+
+          if (!memory.lastResults || memory.lastResults.length === 0) {
+            return res.json({
+              reply: "Please search for products first.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+        memory.originalResults.forEach(product => {
+        });
+
+        const filtered = memory.originalResults.filter(product =>
+          product.sizes?.includes(followUp.size)
+        );
+
+
+
+          if (!filtered.length) {
+            return res.json({
+              reply: `😕 I couldn't find any size ${followUp.size.toUpperCase()} products in your previous results.`,
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          updateMemory(sessionId, {
+            ...memory,
+            lastResults: filtered,
+          });
+
+          return res.json({
+            reply: `📏 I found ${filtered.length} product${filtered.length > 1 ? "s" : ""} in size ${followUp.size.toUpperCase()}.`,
+            products: filtered.slice(0, 5),
+            suggestions: [],
+            hasMore: filtered.length > 5,
+          });
         }
 
       }

@@ -87,6 +87,28 @@ function extractColor(text) {
   ) || "";
 }
 
+function extractSize(text) {
+  const sizes = [
+    "xs",
+    "s",
+    "m",
+    "l",
+    "xl",
+    "xxl",
+    "xxxl",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+  ];
+
+  return sizes.find(size =>
+    text.toLowerCase().includes(size)
+  ) || "";
+}
+
 function extractPrice(text) {
   const match = text.match(
     /(under|below|less than)\s*[$₹£€]?\s*(\d+)/i

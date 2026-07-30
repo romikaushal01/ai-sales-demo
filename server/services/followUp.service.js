@@ -110,6 +110,43 @@ function detectFollowUp(text) {
     };
   }
 
+  // Size Filter
+  const sizes = [
+    "xs",
+    "s",
+    "m",
+    "l",
+    "xl",
+    "xxl",
+    "xxxl",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+  ];
+
+  const words = text.toLowerCase().split(/\s+/);
+
+  const selectedSize = sizes.find(size =>
+    words.includes(size)
+  );
+
+  if (
+    selectedSize &&
+    (
+      text.includes("size") ||
+      text.startsWith("only") ||
+      text.includes("show only")
+    )
+  ) {
+    return {
+      type: "size-filter",
+      size: selectedSize,
+    };
+  }
+
   // Product Details
   if (
     text.includes("tell me more") ||

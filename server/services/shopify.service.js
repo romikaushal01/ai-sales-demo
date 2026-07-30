@@ -105,9 +105,9 @@ async function fetchShopifyProducts(filters = {}) {
 
   // 👇 ADD THIS
   
-  let products =
-  
-    response.data.data.products.edges.map(({ node }) => ({
+  let products = response.data.data.products.edges.map(({ node }) => {
+
+    return {
       title: node.title,
       vendor: node.vendor,
       productType: node.productType,
@@ -122,12 +122,24 @@ async function fetchShopifyProducts(filters = {}) {
       price: Number(
         node.variants.edges[0]?.node.price.amount || 0
       ),
+
       colors: node.variants.edges.flatMap(({ node: variant }) =>
         variant.selectedOptions
           .filter(option => option.name.toLowerCase() === "color")
           .map(option => option.value.toLowerCase())
       ),
-    }));
+
+      sizes: node.variants.edges
+      .flatMap(({ node: variant }) =>
+        variant.selectedOptions
+          .filter(option =>
+            ["size", "shoe size"].includes(option.name.toLowerCase())
+          )
+          .map(option => option.value.toLowerCase())
+      ),
+    };
+
+  });
 
   // Apply price filter
   if (typeof filters.maxPrice === "number") {
@@ -135,7 +147,6 @@ async function fetchShopifyProducts(filters = {}) {
       p => p.price <= filters.maxPrice
     );
   }
-
 
   return products;
 
