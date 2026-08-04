@@ -65,7 +65,13 @@ function buildResponse(filters, products, total = products.length, isShowMore = 
   }
 
   if (filters.productType) {
-    details.push(filters.productType);
+    // Don't repeat if brand already contains product type
+    if (
+      !filters.brand ||
+      !filters.brand.toLowerCase().includes(filters.productType.toLowerCase())
+    ) {
+      details.push(filters.productType);
+    }
   }
 
   if (filters.color) {

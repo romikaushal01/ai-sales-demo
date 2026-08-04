@@ -147,6 +147,34 @@ function detectFollowUp(text) {
     };
   }
 
+  // Add to Cart
+  const addToCartMatch = text.match(
+    /(add|buy|purchase).*(first|second|third|1st|2nd|3rd)|^(add|buy|purchase)( this)? to cart$/
+  );
+
+  if (addToCartMatch) {
+
+    let index = 0;
+
+    if (
+      text.includes("second") ||
+      text.includes("2nd")
+    ) {
+      index = 1;
+    }
+    else if (
+      text.includes("third") ||
+      text.includes("3rd")
+    ) {
+      index = 2;
+    }
+
+    return {
+      type: "add-to-cart",
+      index,
+    };
+  }
+
   // Product Details
   if (
     text.includes("tell me more") ||
@@ -157,6 +185,41 @@ function detectFollowUp(text) {
   ) {
     return {
       type: "details",
+    };
+  }
+
+  // Show Cart
+  if (
+    text === "cart" ||
+    text === "show cart" ||
+    text === "view cart" ||
+    text === "my cart" ||
+    text === "checkout" ||
+    text === "open cart"
+  ) {
+    return {
+      type: "show-cart",
+    };
+  }
+
+  // Remove from Cart
+  if (
+    text.includes("remove") ||
+    text.includes("delete") ||
+    text.includes("remove from cart") ||
+    text.includes("delete from cart")
+  ) {
+
+    let index = 0;
+
+    if (text.includes("first")) index = 0;
+    else if (text.includes("second")) index = 1;
+    else if (text.includes("third")) index = 2;
+    else if (text.includes("fourth")) index = 3;
+
+    return {
+      type: "remove-from-cart",
+      index,
     };
   }
 

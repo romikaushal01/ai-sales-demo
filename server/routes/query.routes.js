@@ -20,6 +20,12 @@ const mergeFilters = require("../services/mergeFilters.service");
 
 const detectFollowUp = require("../services/followUp.service");
 
+const {
+  createCart,
+  addToCart,
+  removeFromCart,
+  getCart,
+} = require("../services/cart.service");
 
 const USE_AI = false;
 
@@ -48,7 +54,7 @@ router.post("/", async (req, res) => {
 
       const conversation = detectConversation(text);
 
-      const memory = getMemory(sessionId);
+      let memory = getMemory(sessionId);
 
       const followUp = detectFollowUp(text);
 
@@ -251,42 +257,197 @@ router.post("/", async (req, res) => {
         if (followUp.type === "size-filter") {
 
           if (!memory.lastResults || memory.lastResults.length === 0) {
-            return res.json({
-              reply: "Please search for products first.",
-              products: [],
-              suggestions: [],
-              hasMore: false,
-            });
+          return res.json({
+          reply: "Please search for products first.",
+          products: [],
+          suggestions: [],
+          hasMore: false,
+          });
           }
 
-        memory.originalResults.forEach(product => {
-        });
+          memory.originalResults.forEach(product => {});
 
-        const filtered = memory.originalResults.filter(product =>
+          const filtered = memory.originalResults.filter(product =>
           product.sizes?.includes(followUp.size)
-        );
-
-
+          );
 
           if (!filtered.length) {
-            return res.json({
-              reply: `😕 I couldn't find any size ${followUp.size.toUpperCase()} products in your previous results.`,
-              products: [],
-              suggestions: [],
-              hasMore: false,
-            });
-          }
+
+          // 🔍 Search the entire store
+          const freshProducts = await fetchShopifyProducts({
+          page: 1,
+          limit: 250,
+          });
+
+          const sizeResults = freshProducts.filter(product =>
+          product.sizes?.includes(followUp.size)
+          );
 
           updateMemory(sessionId, {
-            ...memory,
-            lastResults: filtered,
+          ...memory,
+          originalResults: sizeResults,
+          lastResults: sizeResults,
           });
 
           return res.json({
-            reply: `📏 I found ${filtered.length} product${filtered.length > 1 ? "s" : ""} in size ${followUp.size.toUpperCase()}.`,
-            products: filtered.slice(0, 5),
+          reply: sizeResults.length
+          ? `📏 I couldn't find Size ${followUp.size.toUpperCase()} in the previous results, so I searched the full catalog and found ${sizeResults.length} product${sizeResults.length > 1 ? "s" : ""} in Size ${followUp.size.toUpperCase()}.`
+          : `😕 I couldn't find any products in Size ${followUp.size.toUpperCase()} in the store.`,
+          products: sizeResults.slice(0, 5),
+          suggestions: [],
+          hasMore: sizeResults.length > 5,
+          });
+          }
+
+          updateMemory(sessionId, {
+          ...memory,
+          lastResults: filtered,
+          });
+
+          return res.json({
+          reply: `📏 I found ${filtered.length} product${filtered.length > 1 ? "s" : ""} in size ${followUp.size.toUpperCase()}.`,
+          products: filtered.slice(0, 5),
+          suggestions: [],
+          hasMore: filtered.length > 5,
+          });
+        }
+
+        // Add to Cart
+        if (followUp.type === "add-to-cart") {
+
+          if (!memory.lastResults || memory.lastResults.length === 0) {
+            return res.json({
+              reply: "Please search for a product first.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const product = memory.lastResults[followUp.index];
+
+          if (!product) {
+            return res.json({
+              reply: "I couldn't find that product.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          let checkoutUrl;
+
+          // Existing cart
+          if (memory.cartId) {
+
+            const cart = await addToCart(
+              memory.cartId,
+              product.variantId
+            );
+
+            checkoutUrl = cart.cart.checkoutUrl;
+
+          } else {
+
+            // Create new cart
+            const cart = await createCart(product.variantId);
+
+            const updated = updateMemory(sessionId, {
+              cartId: cart.cart.id,
+              checkoutUrl: cart.cart.checkoutUrl,
+            });
+
+            checkoutUrl = cart.cart.checkoutUrl;
+
+          }
+
+          return res.json({
+            reply: `🛒 ${product.title} has been added to your cart.`,
+            products: [product],
+            checkoutUrl,
             suggestions: [],
-            hasMore: filtered.length > 5,
+            hasMore: false,
+          });
+        }
+
+        // Show Cart
+        if (followUp.type === "show-cart") {
+
+          if (!memory.cartId) {
+            return res.json({
+              reply: "🛒 Your cart is empty.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const cart = await getCart(memory.cartId);
+
+          if (cart.lines.edges.length === 0) {
+            return res.json({
+              reply: "🛒 Your cart is empty.",
+              items: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const items = cart.lines.edges.map(({ node }) => ({
+            title: node.merchandise.product.title,
+            variant: node.merchandise.title,
+            quantity: node.quantity,
+            price: node.merchandise.price.amount,
+            currency: node.merchandise.price.currencyCode,
+            image: node.merchandise.image?.url,
+          }));
+          
+          return res.json({
+            reply: `🛒 You have ${items.length} item${items.length > 1 ? "s" : ""} in your cart.`,
+            items,
+            subtotal: cart.cost.subtotalAmount,
+            total: cart.cost.totalAmount,
+            checkoutUrl: cart.checkoutUrl,
+            suggestions: [],
+            hasMore: false,
+          });
+        }
+
+        // Remove from Cart
+        if (followUp.type === "remove-from-cart") {
+
+          if (!memory.cartId) {
+            return res.json({
+              reply: "🛒 Your cart is empty.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const cart = await getCart(memory.cartId);
+
+          const line = cart.lines.edges[followUp.index];
+
+          if (!line) {
+            return res.json({
+              reply: "I couldn't find that item in your cart.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const removed = await removeFromCart(
+            memory.cartId,
+            line.node.id
+          );
+
+          return res.json({
+            reply: `🗑️ ${line.node.merchandise.product.title} has been removed from your cart.`,
+            checkoutUrl: removed.cart.checkoutUrl,
+            suggestions: [],
+            hasMore: false,
           });
         }
 
@@ -352,17 +513,25 @@ router.post("/", async (req, res) => {
       // NEW SEARCH?
       if (
         !isShowMore &&
+        !followUp &&
         (
           filters.brand ||
           filters.productType ||
-          (
-            filters.keywords.length > 0 &&
-            !filters.brand &&
-            !filters.productType
-          )
+          filters.keywords.length > 0
         )
       ) {
+        const oldMemory = getMemory(sessionId);
+
         clearMemory(sessionId);
+
+        updateMemory(sessionId, {
+          cartId: oldMemory.cartId,
+          checkoutUrl: oldMemory.checkoutUrl,
+        });
+
+        // Reload memory
+        memory = getMemory(sessionId);
+        
       }
 
       // Increase page for "show more"

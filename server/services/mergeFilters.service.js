@@ -9,7 +9,8 @@ function mergeFilters(memory = {}, filters = {}) {
     !filters.color &&
     filters.maxPrice === null &&
     (!filters.keywords || filters.keywords.length === 0)
-  ) {
+  ) 
+  {
     return {
       brand: "",
       productType: "",
@@ -24,6 +25,8 @@ function mergeFilters(memory = {}, filters = {}) {
       limit: 5,
       lastResults: [],
       originalResults: [],
+      cartId: memory.cartId,
+      checkoutUrl: memory.checkoutUrl,
     };
   }
 
@@ -54,6 +57,11 @@ function mergeFilters(memory = {}, filters = {}) {
 
     // ✅ ADD THIS
     originalResults: memory.originalResults || [],
+
+    // Preserve cart
+    cartId: memory.cartId,
+    checkoutUrl: memory.checkoutUrl,
+
   };
 }
 

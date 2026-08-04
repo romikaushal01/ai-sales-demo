@@ -32,6 +32,14 @@ async function getCatalog() {
   const colors = new Set();
   const words = new Set();
 	const vendorIndex = {};
+
+  // First pass: collect all product types
+  products.forEach(product => {
+    if (product.productType) {
+      productTypes.add(product.productType.toLowerCase());
+    }
+  });
+  
   const commonColors = [
     "black",
     "white",
@@ -70,9 +78,12 @@ async function getCatalog() {
 
 					words.add(word);
 
-					if (!["vendor", "store", "shop"].includes(word)) {
-						vendorIndex[word] = vendor;
-					}
+					if (
+            !["vendor", "store", "shop"].includes(word) &&
+            !productTypes.has(word)
+          ) {
+            vendorIndex[word] = vendor;
+          }
 
 				}
 

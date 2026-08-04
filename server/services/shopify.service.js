@@ -13,6 +13,15 @@ function buildSearchQuery(filters = {}) {
     parts.push(`product_type:${filters.productType}`);
   }
 
+  // Search by keywords if no productType detected
+  if (
+    filters.keywords &&
+    filters.keywords.length > 0 &&
+    !filters.productType
+  ) {
+    parts.push(filters.keywords.join(" "));
+  }
+
   return parts.join(" ");
 }
 
@@ -72,6 +81,8 @@ async function fetchShopifyProducts(filters = {}) {
           variants(first: 20) {
             edges {
               node {
+                id
+
                 price {
                   amount
                   currencyCode
@@ -111,6 +122,7 @@ async function fetchShopifyProducts(filters = {}) {
       title: node.title,
       vendor: node.vendor,
       productType: node.productType,
+      variantId: node.variants.edges[0]?.node.id,
       availableForSale: node.availableForSale,
       tags: node.tags || [],
       description: node.description || "",

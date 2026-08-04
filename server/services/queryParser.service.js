@@ -19,8 +19,46 @@ function extractBrand(text, vendorIndex = {}) {
 }
 
 function extractProductType(text, productTypes = []) {
+
+  const aliases = {
+    "shoes": [
+      "shoe",
+      "shoes",
+      "sneaker",
+      "sneakers",
+      "running shoe",
+      "running shoes",
+    ],
+
+    "t-shirt": [
+      "shirt",
+      "shirts",
+      "t shirt",
+      "t shirts",
+      "t-shirt",
+      "t-shirts",
+      "tee",
+      "tees",
+    ],
+
+    "hoodie": [
+      "hoodie",
+      "hoodies",
+    ],
+  };
+
+  // Check aliases first
+  for (const [productType, words] of Object.entries(aliases)) {
+    if (words.some(word => text.includes(word))) {
+      return productType;
+    }
+  }
+
+  // Fallback to exact Shopify product types
   return (
-    productTypes.find((type) => text.includes(type)) || ""
+    productTypes.find(type =>
+      text.includes(type.toLowerCase())
+    ) || ""
   );
 }
 
@@ -273,8 +311,6 @@ async function parseQuery(text = "") {
       catalog.productTypes
     ),
   };
-
-  
 }
 
 module.exports = parseQuery;
