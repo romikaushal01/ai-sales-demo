@@ -500,6 +500,45 @@ router.post("/", async (req, res) => {
           });
         }
 
+        // Set Quantity
+        if (followUp.type === "set-quantity") {
+
+          if (!memory.cartId) {
+            return res.json({
+              reply: "🛒 Your cart is empty.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const cart = await getCart(memory.cartId);
+
+          const line = cart.lines.edges[followUp.index];
+
+          if (!line) {
+            return res.json({
+              reply: "I couldn't find that item in your cart.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const updated = await updateCartLine(
+            memory.cartId,
+            line.node.id,
+            followUp.quantity
+          );
+
+          return res.json({
+            reply: `✅ ${line.node.merchandise.product.title} quantity updated to ${followUp.quantity}.`,
+            checkoutUrl: updated.cart.checkoutUrl,
+            suggestions: [],
+            hasMore: false,
+          });
+        }
+        
         // Decrease Quantity
         if (followUp.type === "decrease-quantity") {
 

@@ -259,8 +259,30 @@ function detectFollowUp(text) {
       type: "decrease-quantity",
       index,
     };
+  }  
+
+  // Set Quantity
+  const setQuantityMatch = text.match(
+    /(?:make|set|change|update)(?:\s+(?:first|second|third))?(?:\s+one)?(?:\s+quantity)?(?:\s+to)?\s+(\d+)/i
+  );
+  console.log("SET MATCH:", setQuantityMatch);
+  if (setQuantityMatch) {
+
+    let index = 0;
+
+    if (text.includes("second")) index = 1;
+    else if (text.includes("third")) index = 2;
+
+    const quantity = parseInt(setQuantityMatch[1], 10);
+
+    if (quantity > 0) {
+      return {
+        type: "set-quantity",
+        index,
+        quantity,
+      };
+    }
   }
-  
   // Compare Products
   if (
     text.includes("compare") ||
