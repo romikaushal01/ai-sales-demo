@@ -223,6 +223,44 @@ function detectFollowUp(text) {
     };
   }
 
+  // Increase Quantity
+  if (
+    text.includes("increase quantity") ||
+    text.includes("increase first") ||
+    text.includes("add one more") ||
+    text.includes("one more")
+  ) {
+
+    let index = 0;
+
+    if (text.includes("second")) index = 1;
+    else if (text.includes("third")) index = 2;
+
+    return {
+      type: "increase-quantity",
+      index,
+    };
+  }
+
+  // Decrease Quantity
+  if (
+    text.includes("decrease quantity") ||
+    text.includes("decrease first") ||
+    text.includes("reduce quantity") ||
+    text.includes("one less")
+  ) {
+
+    let index = 0;
+
+    if (text.includes("second")) index = 1;
+    else if (text.includes("third")) index = 2;
+
+    return {
+      type: "decrease-quantity",
+      index,
+    };
+  }
+  
   // Compare Products
   if (
     text.includes("compare") ||

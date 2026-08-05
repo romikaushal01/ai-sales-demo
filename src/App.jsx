@@ -84,7 +84,7 @@ export default function App() {
       });
 
       const data = await res.json();
-
+      console.log("API RESPONSE:", data);
       const aiMessage = {
         sender: "ai",
         text: data.reply,

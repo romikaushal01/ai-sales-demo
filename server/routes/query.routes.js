@@ -24,6 +24,7 @@ const {
   createCart,
   addToCart,
   removeFromCart,
+  updateCartLine,
   getCart,
 } = require("../services/cart.service");
 
@@ -213,6 +214,7 @@ router.post("/", async (req, res) => {
           });
 
         }
+
         // Color Filter
         if (followUp.type === "color-filter") {
 
@@ -253,6 +255,7 @@ router.post("/", async (req, res) => {
           });
 
         }
+
         // Size Filter
         if (followUp.type === "size-filter") {
 
@@ -401,9 +404,16 @@ router.post("/", async (req, res) => {
             currency: node.merchandise.price.currencyCode,
             image: node.merchandise.image?.url,
           }));
+           
+          const totalItems = items.reduce(
+            (sum, item) => sum + item.quantity,
+            0
+          );
           
+          const reply = `🛒 You have ${totalItems} item${totalItems > 1 ? "s" : ""} in your cart.`;
+
           return res.json({
-            reply: `🛒 You have ${items.length} item${items.length > 1 ? "s" : ""} in your cart.`,
+            reply,
             items,
             subtotal: cart.cost.subtotalAmount,
             total: cart.cost.totalAmount,
@@ -446,6 +456,101 @@ router.post("/", async (req, res) => {
           return res.json({
             reply: `🗑️ ${line.node.merchandise.product.title} has been removed from your cart.`,
             checkoutUrl: removed.cart.checkoutUrl,
+            suggestions: [],
+            hasMore: false,
+          });
+        }
+
+        // Increase Quantity
+        if (followUp.type === "increase-quantity") {
+
+          if (!memory.cartId) {
+            return res.json({
+              reply: "🛒 Your cart is empty.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const cart = await getCart(memory.cartId);
+
+          const line = cart.lines.edges[followUp.index];
+
+          if (!line) {
+            return res.json({
+              reply: "I couldn't find that item in your cart.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const updated = await updateCartLine(
+            memory.cartId,
+            line.node.id,
+            line.node.quantity + 1
+          );
+
+          return res.json({
+            reply: `✅ ${line.node.merchandise.product.title} quantity increased to ${line.node.quantity + 1}.`,
+            checkoutUrl: updated.cart.checkoutUrl,
+            suggestions: [],
+            hasMore: false,
+          });
+        }
+
+        // Decrease Quantity
+        if (followUp.type === "decrease-quantity") {
+
+          if (!memory.cartId) {
+            return res.json({
+              reply: "🛒 Your cart is empty.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const cart = await getCart(memory.cartId);
+
+          const line = cart.lines.edges[followUp.index];
+
+          if (!line) {
+            return res.json({
+              reply: "I couldn't find that item in your cart.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          // If quantity is 1, remove item instead
+          if (line.node.quantity === 1) {
+
+            const removed = await removeFromCart(
+              memory.cartId,
+              line.node.id
+            );
+
+            return res.json({
+              reply: `🗑️ ${line.node.merchandise.product.title} has been removed from your cart.`,
+              checkoutUrl: removed.cart.checkoutUrl,
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          // Otherwise decrease quantity
+          const updated = await updateCartLine(
+            memory.cartId,
+            line.node.id,
+            line.node.quantity - 1
+          );
+
+          return res.json({
+            reply: `✅ ${line.node.merchandise.product.title} quantity decreased to ${line.node.quantity - 1}.`,
+            checkoutUrl: updated.cart.checkoutUrl,
             suggestions: [],
             hasMore: false,
           });
