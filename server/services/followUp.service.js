@@ -31,6 +31,45 @@ function detectFollowUp(text) {
 		};
 	}
 
+  // Compare Products
+  if (
+    text.includes("compare") ||
+    text.includes("compare first two") ||
+    text.includes("compare first and second") ||
+    text.includes("compare the first two")
+  ) {
+    return {
+      type: "compare",
+    };
+  }
+
+  // Product Details
+  if (
+    text.includes("tell me more") ||
+    text.includes("more about") ||
+    text.includes("details") ||
+    text.includes("first one") ||
+    text.includes("second one")
+  ) {
+    return {
+      type: "details",
+    };
+  }
+
+  // Better Product
+  if (
+    text.includes("which one is better") ||
+    text.includes("which is better") ||
+    text.includes("better one") ||
+    text.includes("recommended one") ||
+    text.includes("which one do you recommend")
+  ) {
+    console.log("BETTER PRODUCT DETECTED");
+    return {
+      type: "better-product",
+    };
+  }
+
   // Color Filter
   const colors = [
     "black",
@@ -175,19 +214,6 @@ function detectFollowUp(text) {
     };
   }
 
-  // Product Details
-  if (
-    text.includes("tell me more") ||
-    text.includes("more about") ||
-    text.includes("details") ||
-    text.includes("first one") ||
-    text.includes("second one")
-  ) {
-    return {
-      type: "details",
-    };
-  }
-
   // Show Cart
   if (
     text === "cart" ||
@@ -219,6 +245,19 @@ function detectFollowUp(text) {
     return {
       type: "remove-from-cart",
       index,
+    };
+  }
+
+  // Clear Cart
+  if (
+    text.includes("clear cart") ||
+    text.includes("empty cart") ||
+    text.includes("empty my cart") ||
+    text.includes("remove everything") ||
+    text.includes("remove all items")
+  ) {
+    return {
+      type: "clear-cart",
     };
   }
 
@@ -281,15 +320,37 @@ function detectFollowUp(text) {
       };
     }
   }
-  // Compare Products
+
+  // Add Cheaper Product
   if (
-    text.includes("compare") ||
-    text.includes("compare first two") ||
-    text.includes("compare first and second") ||
-    text.includes("compare the first two")
+    text.includes("add the cheaper one") ||
+    text.includes("add cheaper")
   ) {
     return {
-      type: "compare",
+      type: "add-cheaper",
+    };
+  }
+
+  // Add Premium Product
+  if (
+    text.includes("add the premium one") ||
+    text.includes("add premium")
+  ) {
+    return {
+      type: "add-premium",
+    };
+  }
+
+  // Buy Recommended Product
+  if (
+    text === "buy it" ||
+    text === "buy this" ||
+    text === "purchase it" ||
+    text === "i'll take it" ||
+    text === "i will take it"
+  ) {
+    return {
+      type: "buy-recommended",
     };
   }
 
@@ -303,19 +364,6 @@ function detectFollowUp(text) {
   ) {
     return {
       type: "checkout",
-    };
-  }
-
-  // Clear Cart
-  if (
-    text.includes("clear cart") ||
-    text.includes("empty cart") ||
-    text.includes("empty my cart") ||
-    text.includes("remove everything") ||
-    text.includes("remove all items")
-  ) {
-    return {
-      type: "clear-cart",
     };
   }
 

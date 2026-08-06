@@ -30,6 +30,37 @@ const {
 } = require("../services/cart.service");
 
 const USE_AI = false;
+async function addProductToCart(sessionId, memory, product) {
+
+  let checkoutUrl;
+
+  if (memory.cartId) {
+
+    const cart = await addToCart(
+      memory.cartId,
+      product.variantId
+    );
+
+    checkoutUrl = cart.cart.checkoutUrl;
+
+  } else {
+
+    const cart = await createCart(product.variantId);
+
+    updateMemory(sessionId, {
+      cartId: cart.cart.id,
+      checkoutUrl: cart.cart.checkoutUrl,
+    });
+
+    checkoutUrl = cart.cart.checkoutUrl;
+  }
+
+  updateMemory(sessionId, {
+    lastAdded: product,
+  });
+
+  return checkoutUrl;
+}
 
 router.post("/", async (req, res) => {
   try {
@@ -222,6 +253,68 @@ router.post("/", async (req, res) => {
 
         }
 
+        // Better Products
+        if (followUp.type === "better-product") {
+
+          if (!memory.lastCompared || memory.lastCompared.length < 2) {
+            return res.json({
+              reply: "Please compare two products first.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const first = memory.lastCompared[0];
+          const second = memory.lastCompared[1];
+
+          const price1 = Number(first.price);
+          const price2 = Number(second.price);
+
+          const cheaper = price1 <= price2 ? first : second;
+          const premium = price1 > price2 ? first : second;
+
+          const difference = Math.abs(price1 - price2);
+
+          let reply;
+
+          if (difference < 10) {
+            reply = `⭐ I'd recommend ${premium.title}.
+
+            For just $${difference} more, it's the more premium option and offers better overall value.
+
+            💰 ${cheaper.title} is still a great budget-friendly choice.
+
+            👉 You can simply say "Buy it" to purchase my recommended product.`;
+
+          } else {
+            reply = `⭐ I'd recommend ${cheaper.title}.
+
+              It offers significantly better value for money.
+
+              If you don't mind spending $${difference} extra, ${premium.title} is the more premium option.
+
+              👉 You can simply say "Buy it" to purchase my recommended product.`;
+          }
+          const recommended =
+          difference < 10 ? premium : cheaper;
+
+          updateMemory(sessionId, {
+            lastRecommended: recommended,
+          });
+
+          return res.json({
+            reply,
+            products: [recommended],
+            suggestions: [
+              "Buy it",
+              "Show details",
+              "Compare again",
+            ],
+            hasMore: false,
+          });
+        }
+
         // Color Filter
         if (followUp.type === "color-filter") {
 
@@ -321,7 +414,7 @@ router.post("/", async (req, res) => {
           hasMore: filtered.length > 5,
           });
         }
-
+      
         // Add to Cart
         if (followUp.type === "add-to-cart") {
 
@@ -344,35 +437,11 @@ router.post("/", async (req, res) => {
             });
           }
 
-          let checkoutUrl;
-
-          // Existing cart
-          if (memory.cartId) {
-
-            const cart = await addToCart(
-              memory.cartId,
-              product.variantId
-            );
-
-            checkoutUrl = cart.cart.checkoutUrl;
-
-          } else {
-
-            // Create new cart
-            const cart = await createCart(product.variantId);
-
-            updateMemory(sessionId, {
-              cartId: cart.cart.id,
-              checkoutUrl: cart.cart.checkoutUrl,
-            });
-
-            checkoutUrl = cart.cart.checkoutUrl;
-
-          }
-
-          updateMemory(sessionId, {
-            lastAdded: product,
-          });
+          const checkoutUrl = await addProductToCart(
+            sessionId,
+            memory,
+            product
+          );
 
           return res.json({
             reply: `🛒 ${product.title} has been added to your cart.`,
@@ -471,6 +540,38 @@ router.post("/", async (req, res) => {
           });
         }
 
+        // Clear Cart
+        if (followUp.type === "clear-cart") {
+
+          if (!memory.cartId) {
+            return res.json({
+              reply: "🛒 Your cart is already empty.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const cart = await getCart(memory.cartId);
+
+          if (cart.lines.edges.length === 0) {
+            return res.json({
+              reply: "🛒 Your cart is already empty.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          await clearCart(memory.cartId);
+
+          return res.json({
+            reply: "🗑️ Your cart has been cleared.",
+            suggestions: [],
+            hasMore: false,
+          });
+        }
+
         // Increase Quantity
         if (followUp.type === "increase-quantity") {
 
@@ -510,45 +611,6 @@ router.post("/", async (req, res) => {
           });
         }
 
-        // Set Quantity
-        if (followUp.type === "set-quantity") {
-
-          if (!memory.cartId) {
-            return res.json({
-              reply: "🛒 Your cart is empty.",
-              products: [],
-              suggestions: [],
-              hasMore: false,
-            });
-          }
-
-          const cart = await getCart(memory.cartId);
-
-          const line = cart.lines.edges[followUp.index];
-
-          if (!line) {
-            return res.json({
-              reply: "I couldn't find that item in your cart.",
-              products: [],
-              suggestions: [],
-              hasMore: false,
-            });
-          }
-
-          const updated = await updateCartLine(
-            memory.cartId,
-            line.node.id,
-            followUp.quantity
-          );
-
-          return res.json({
-            reply: `✅ ${line.node.merchandise.product.title} quantity updated to ${followUp.quantity}.`,
-            checkoutUrl: updated.cart.checkoutUrl,
-            suggestions: [],
-            hasMore: false,
-          });
-        }
-        
         // Decrease Quantity
         if (followUp.type === "decrease-quantity") {
 
@@ -605,12 +667,12 @@ router.post("/", async (req, res) => {
           });
         }
 
-        // Clear Cart
-        if (followUp.type === "clear-cart") {
+        // Set Quantity
+        if (followUp.type === "set-quantity") {
 
           if (!memory.cartId) {
             return res.json({
-              reply: "🛒 Your cart is already empty.",
+              reply: "🛒 Your cart is empty.",
               products: [],
               suggestions: [],
               hasMore: false,
@@ -619,19 +681,26 @@ router.post("/", async (req, res) => {
 
           const cart = await getCart(memory.cartId);
 
-          if (cart.lines.edges.length === 0) {
+          const line = cart.lines.edges[followUp.index];
+
+          if (!line) {
             return res.json({
-              reply: "🛒 Your cart is already empty.",
+              reply: "I couldn't find that item in your cart.",
               products: [],
               suggestions: [],
               hasMore: false,
             });
           }
 
-          await clearCart(memory.cartId);
+          const updated = await updateCartLine(
+            memory.cartId,
+            line.node.id,
+            followUp.quantity
+          );
 
           return res.json({
-            reply: "🗑️ Your cart has been cleared.",
+            reply: `✅ ${line.node.merchandise.product.title} quantity updated to ${followUp.quantity}.`,
+            checkoutUrl: updated.cart.checkoutUrl,
             suggestions: [],
             hasMore: false,
           });
@@ -665,6 +734,120 @@ router.post("/", async (req, res) => {
             checkoutUrl: cart.checkoutUrl,
             messageType: "checkout",
             suggestions: [],
+            hasMore: false,
+          });
+        }
+        
+        // Add Cheaper Products
+        if (followUp.type === "add-cheaper") {
+
+        if (
+          !memory.lastCompared ||
+          memory.lastCompared.length < 2
+        ) {
+          return res.json({
+            reply: "Please compare two products first.",
+            products: [],
+            suggestions: [],
+            hasMore: false,
+          });
+        }
+
+        const first = memory.lastCompared[0];
+        const second = memory.lastCompared[1];
+
+        const cheaper =
+          Number(first.price) <= Number(second.price)
+            ? first
+            : second;
+
+        const checkoutUrl = await addProductToCart(
+          sessionId,
+          memory,
+          cheaper
+        );
+
+        return res.json({
+          reply: `🛒 ${cheaper.title} has been added to your cart.`,
+          products: [cheaper],
+          checkoutUrl,
+          suggestions: [
+            "Show cart",
+            "Checkout",
+          ],
+          hasMore: false,
+        });
+        }
+
+        // Add Premium Products
+        if (followUp.type === "add-premium") {
+
+          if (
+            !memory.lastCompared ||
+            memory.lastCompared.length < 2
+          ) {
+            return res.json({
+              reply: "Please compare two products first.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const first = memory.lastCompared[0];
+          const second = memory.lastCompared[1];
+
+          const premium =
+            Number(first.price) >= Number(second.price)
+              ? first
+              : second;
+
+          const checkoutUrl = await addProductToCart(
+            sessionId,
+            memory,
+            premium
+          );
+
+          return res.json({
+            reply: `🛒 ${premium.title} has been added to your cart.`,
+            products: [premium],
+            checkoutUrl,
+            suggestions: [
+              "Show cart",
+              "Checkout",
+            ],
+            hasMore: false,
+          });
+        }
+
+        // Buy Recommended Product
+        if (followUp.type === "buy-recommended") {
+
+          if (!memory.lastRecommended) {
+            return res.json({
+              reply: "Please ask me for a recommendation first.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const product = memory.lastRecommended;
+
+          const checkoutUrl = await addProductToCart(
+            sessionId,
+            memory,
+            product
+          );
+
+          return res.json({
+            reply: `🛒 ${product.title} has been added to your cart.`,
+            products: [product],
+            checkoutUrl,
+            suggestions: [
+              "Show cart",
+              "Checkout",              
+            ],
             hasMore: false,
           });
         }
