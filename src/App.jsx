@@ -89,6 +89,7 @@ export default function App() {
         sender: "ai",
         text: data.reply,
         products: data.products,
+        checkoutUrl: data.checkoutUrl || "",
         suggestions: data.suggestions || [],
         hasMore: data.hasMore || false,
         messageType: data.messageType || "",
@@ -168,6 +169,20 @@ export default function App() {
                       ) : msg.type === "empty" ? (
                         <p className="no-products">No products found 😕</p>
                       ) : null}
+
+                      {/* Checkout */}
+                      {msg.messageType === "checkout" && msg.checkoutUrl && (
+                        <div className="checkout-container">
+                          <a
+                            href={msg.checkoutUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="checkout-btn"
+                          >
+                            🛍️ Proceed to Checkout
+                          </a>
+                        </div>
+                      )}
 
                       {/* Suggestions */}
                       {msg.suggestions?.length > 0 && (

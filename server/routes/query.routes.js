@@ -595,6 +595,38 @@ router.post("/", async (req, res) => {
           });
         }
 
+        // Checkout
+        if (followUp.type === "checkout") {
+
+          if (!memory.cartId) {
+            return res.json({
+              reply: "🛒 Your cart is empty.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const cart = await getCart(memory.cartId);
+
+          if (cart.lines.edges.length === 0) {
+            return res.json({
+              reply: "🛒 Your cart is empty.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          return res.json({
+            reply: "🛍️ You're all set! Click below to complete your purchase.",
+            checkoutUrl: cart.checkoutUrl,
+            messageType: "checkout",
+            suggestions: [],
+            hasMore: false,
+          });
+        }
+
       }
 
       // User said YES

@@ -194,7 +194,6 @@ function detectFollowUp(text) {
     text === "show cart" ||
     text === "view cart" ||
     text === "my cart" ||
-    text === "checkout" ||
     text === "open cart"
   ) {
     return {
@@ -292,6 +291,19 @@ function detectFollowUp(text) {
   ) {
     return {
       type: "compare",
+    };
+  }
+
+  // Checkout
+  if (
+    text.includes("checkout") ||
+    text.includes("buy now") ||
+    text.includes("proceed to checkout") ||
+    text.includes("proceed to payment") ||
+    text.includes("place order")
+  ) {
+    return {
+      type: "checkout",
     };
   }
 
