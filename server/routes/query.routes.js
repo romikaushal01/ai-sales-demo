@@ -138,6 +138,10 @@ router.post("/", async (req, res) => {
           const first = memory.lastResults[0];
           const second = memory.lastResults[1];
 
+          updateMemory(sessionId, {
+            lastCompared: [first, second],
+          });
+
           return res.json({
             reply: `📊 Product Comparison
 
@@ -192,7 +196,9 @@ router.post("/", async (req, res) => {
                 )
                 .join(" ")
             : "N/A";
-
+          updateMemory(sessionId, {
+            lastViewed: product,
+          });
           return res.json({
             reply: `📦 ${product.title}
 
@@ -329,7 +335,6 @@ router.post("/", async (req, res) => {
           }
 
           const product = memory.lastResults[followUp.index];
-
           if (!product) {
             return res.json({
               reply: "I couldn't find that product.",
@@ -356,7 +361,7 @@ router.post("/", async (req, res) => {
             // Create new cart
             const cart = await createCart(product.variantId);
 
-            const updated = updateMemory(sessionId, {
+            updateMemory(sessionId, {
               cartId: cart.cart.id,
               checkoutUrl: cart.cart.checkoutUrl,
             });
@@ -364,6 +369,10 @@ router.post("/", async (req, res) => {
             checkoutUrl = cart.cart.checkoutUrl;
 
           }
+
+          updateMemory(sessionId, {
+            lastAdded: product,
+          });
 
           return res.json({
             reply: `🛒 ${product.title} has been added to your cart.`,
