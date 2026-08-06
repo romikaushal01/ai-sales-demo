@@ -24,6 +24,7 @@ const {
   createCart,
   addToCart,
   removeFromCart,
+  clearCart,
   updateCartLine,
   getCart,
 } = require("../services/cart.service");
@@ -590,6 +591,38 @@ router.post("/", async (req, res) => {
           return res.json({
             reply: `✅ ${line.node.merchandise.product.title} quantity decreased to ${line.node.quantity - 1}.`,
             checkoutUrl: updated.cart.checkoutUrl,
+            suggestions: [],
+            hasMore: false,
+          });
+        }
+
+        // Clear Cart
+        if (followUp.type === "clear-cart") {
+
+          if (!memory.cartId) {
+            return res.json({
+              reply: "🛒 Your cart is already empty.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const cart = await getCart(memory.cartId);
+
+          if (cart.lines.edges.length === 0) {
+            return res.json({
+              reply: "🛒 Your cart is already empty.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          await clearCart(memory.cartId);
+
+          return res.json({
+            reply: "🗑️ Your cart has been cleared.",
             suggestions: [],
             hasMore: false,
           });

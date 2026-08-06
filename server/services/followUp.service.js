@@ -264,7 +264,6 @@ function detectFollowUp(text) {
   const setQuantityMatch = text.match(
     /(?:make|set|change|update)(?:\s+(?:first|second|third))?(?:\s+one)?(?:\s+quantity)?(?:\s+to)?\s+(\d+)/i
   );
-  console.log("SET MATCH:", setQuantityMatch);
   if (setQuantityMatch) {
 
     let index = 0;
@@ -304,6 +303,19 @@ function detectFollowUp(text) {
   ) {
     return {
       type: "checkout",
+    };
+  }
+
+  // Clear Cart
+  if (
+    text.includes("clear cart") ||
+    text.includes("empty cart") ||
+    text.includes("empty my cart") ||
+    text.includes("remove everything") ||
+    text.includes("remove all items")
+  ) {
+    return {
+      type: "clear-cart",
     };
   }
 

@@ -134,6 +134,59 @@ async function removeFromCart(cartId, lineId) {
   return response.data.data.cartLinesRemove;
 }
 
+async function clearCart(cartId) {
+
+  const cart = await getCart(cartId);
+
+  const lineIds = cart.lines.edges.map(
+    edge => edge.node.id
+  );
+
+  if (lineIds.length === 0) {
+    return null;
+  }
+
+  const query = `
+    mutation cartLinesRemove(
+      $cartId: ID!,
+      $lineIds: [ID!]!
+    ) {
+      cartLinesRemove(
+        cartId: $cartId,
+        lineIds: $lineIds
+      ) {
+        cart {
+          id
+          checkoutUrl
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const response = await axios.post(
+    `https://${SHOP}/api/2025-01/graphql.json`,
+    {
+      query,
+      variables: {
+        cartId,
+        lineIds,
+      },
+    },
+    {
+      headers: {
+        "X-Shopify-Storefront-Access-Token": TOKEN,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response.data.data.cartLinesRemove;
+}
+
 async function updateCartLine(cartId, lineId, quantity) {
 
   const query = `
@@ -269,6 +322,7 @@ module.exports = {
   createCart,
   addToCart,
   removeFromCart,
+  clearCart,
   updateCartLine,
   getCart,
 };
