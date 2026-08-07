@@ -29,6 +29,10 @@ const {
   getCart,
 } = require("../services/cart.service");
 
+const {
+  trackEvent,
+} = require("../analytics/analytics.service");
+
 const USE_AI = false;
 async function addProductToCart(sessionId, memory, product) {
 
@@ -90,6 +94,8 @@ router.post("/", async (req, res) => {
       let memory = getMemory(sessionId);
 
       const followUp = detectFollowUp(text);
+      console.log("FOLLOW UP:", followUp);
+      console.log("Memory lastResults:", memory.lastResults?.length);
 
       // Follow-up questions
       if (followUp && memory.lastResults?.length) {
@@ -156,6 +162,10 @@ router.post("/", async (req, res) => {
 
         // Compare Products
         if (followUp.type === "compare") {
+
+          console.log("Compare Session:", sessionId);
+console.log("Memory:", memory);
+console.log("Compare memory:", getMemory(sessionId).lastResults?.length);
 
           if (!memory.lastResults || memory.lastResults.length < 2) {
             return res.json({
@@ -301,6 +311,17 @@ router.post("/", async (req, res) => {
 
           updateMemory(sessionId, {
             lastRecommended: recommended,
+          });
+
+          trackEvent({
+            event: "RECOMMEND_PRODUCT",
+            sessionId,
+            productTitle: recommended.title,
+            productPrice: recommended.price,
+            comparedProducts: [
+              first.title,
+              second.title,
+            ],
           });
 
           return res.json({
@@ -1012,6 +1033,20 @@ router.post("/", async (req, res) => {
         false
       );
 
+      // ✅ Track Search Event
+      trackEvent({
+        event: "SEARCH_PRODUCT",
+        // shop: SHOP,
+        sessionId,
+        query: text,
+        results: ranked.length,
+        brand: mergedFilters.brand,
+        category: mergedFilters.productType,
+        color: mergedFilters.color,
+        page: mergedFilters.page,
+        success: ranked.length > 0,
+      });
+
      // ✅ Save AFTER buildResponse
       updateMemory(sessionId, {
         ...mergedFilters,
@@ -1019,7 +1054,7 @@ router.post("/", async (req, res) => {
         lastResults: ranked,
         pendingAction: response.pendingAction || "",
       });
-
+console.log("After updateMemory:", getMemory(sessionId).lastResults?.length);
       return res.json(response);
 
     }

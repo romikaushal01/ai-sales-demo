@@ -1,4 +1,8 @@
 const path = require("path");
+const analyticsRoutes = require("./analytics/analytics.routes");
+const {
+  trackEvent,
+} = require("./analytics/analytics.service");
 
 require("dotenv").config({
   path: path.resolve(__dirname, "../.env"),
@@ -28,3 +32,5 @@ app.use("/chat", require("./routes/query.routes"));
 app.listen(PORT, () => {
   console.log(`✅ Server running on ${PORT}`);
 });
+
+app.use("/analytics", analyticsRoutes);
