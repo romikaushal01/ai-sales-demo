@@ -21,6 +21,20 @@ function writeEvents(events) {
   );
 }
 
+function countBy(events, eventName, field) {
+  const counts = {};
+
+  events
+    .filter(e => e.event === eventName && e[field])
+    .forEach(e => {
+      counts[e[field]] = (counts[e[field]] || 0) + 1;
+    });
+
+  return Object.entries(counts)
+    .map(([value, count]) => ({ value, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
 function trackEvent(event) {
 
   const events = readEvents();
@@ -40,26 +54,48 @@ function getAnalytics() {
 
   return {
 
-    totalEvents: events.length,
+    overview: {
+      totalEvents: events.length,
 
-    totalSearches: events.filter(
-      e => e.event === "SEARCH_PRODUCT"
-    ).length,
+      totalSearches: events.filter(
+        e => e.event === "SEARCH_PRODUCT"
+      ).length,
 
-    totalAddToCart: events.filter(
-      e => e.event === "ADD_TO_CART"
-    ).length,
+      totalAddToCart: events.filter(
+        e => e.event === "ADD_TO_CART"
+      ).length,
 
-    totalCheckoutClicks: events.filter(
-      e => e.event === "CHECKOUT_CLICK"
-    ).length,
+      totalCheckoutClicks: events.filter(
+        e => e.event === "CHECKOUT_CLICK"
+      ).length,
 
-    totalRecommendations: events.filter(
-      e => e.event === "RECOMMEND_PRODUCT"
-    ).length,
+      totalRecommendations: events.filter(
+        e => e.event === "RECOMMEND_PRODUCT"
+      ).length,
+    },
 
+    topSearches: countBy(
+      events,
+      "SEARCH_PRODUCT",
+      "query"
+    ),
+
+    topProducts: countBy(
+      events,
+      "ADD_TO_CART",
+      "productTitle"
+    ),
+
+    topRecommendations: countBy(
+      events,
+      "RECOMMEND_PRODUCT",
+      "productTitle"
+    ),
+
+    recentEvents: events
+      .slice(-10)
+      .reverse(),
   };
-
 }
 
 module.exports = {

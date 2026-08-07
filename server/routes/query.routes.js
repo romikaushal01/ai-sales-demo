@@ -94,8 +94,9 @@ router.post("/", async (req, res) => {
       let memory = getMemory(sessionId);
 
       const followUp = detectFollowUp(text);
-      console.log("FOLLOW UP:", followUp);
-      console.log("Memory lastResults:", memory.lastResults?.length);
+
+      console.log("Incoming message:", message);
+console.log("FOLLOW UP:", followUp);
 
       // Follow-up questions
       if (followUp && memory.lastResults?.length) {
@@ -162,10 +163,6 @@ router.post("/", async (req, res) => {
 
         // Compare Products
         if (followUp.type === "compare") {
-
-          console.log("Compare Session:", sessionId);
-console.log("Memory:", memory);
-console.log("Compare memory:", getMemory(sessionId).lastResults?.length);
 
           if (!memory.lastResults || memory.lastResults.length < 2) {
             return res.json({
@@ -322,6 +319,7 @@ console.log("Compare memory:", getMemory(sessionId).lastResults?.length);
               first.title,
               second.title,
             ],
+            recommendationType: "better-product",
           });
 
           return res.json({
@@ -750,6 +748,15 @@ console.log("Compare memory:", getMemory(sessionId).lastResults?.length);
             });
           }
 
+           // ✅ Track Checkout Click
+           trackEvent({
+             event: "CHECKOUT_CLICK",
+             sessionId,
+             cartId: memory.cartId,
+             items: cart.lines.edges.length,
+             checkoutUrl: cart.checkoutUrl,
+           });
+
           return res.json({
             reply: "🛍️ You're all set! Click below to complete your purchase.",
             checkoutUrl: cart.checkoutUrl,
@@ -860,6 +867,15 @@ console.log("Compare memory:", getMemory(sessionId).lastResults?.length);
             memory,
             product
           );
+          console.log("ADD TO CART EVENT FIRED");
+          trackEvent({
+            event: "ADD_TO_CART",
+            sessionId,
+            productTitle: product.title,
+            productPrice: product.price,
+            productVendor: product.vendor,
+            productType: product.productType,
+          });
 
           return res.json({
             reply: `🛒 ${product.title} has been added to your cart.`,
@@ -1034,18 +1050,25 @@ console.log("Compare memory:", getMemory(sessionId).lastResults?.length);
       );
 
       // ✅ Track Search Event
-      trackEvent({
-        event: "SEARCH_PRODUCT",
-        // shop: SHOP,
-        sessionId,
-        query: text,
-        results: ranked.length,
-        brand: mergedFilters.brand,
-        category: mergedFilters.productType,
-        color: mergedFilters.color,
-        page: mergedFilters.page,
-        success: ranked.length > 0,
-      });
+      if (
+        !followUp &&
+        !isShowMore &&
+        mergedFilters.page === 1
+      ) {
+        trackEvent({
+          event: "SEARCH_PRODUCT",
+          sessionId,
+          query: text,
+          results: ranked.length,
+          brand: mergedFilters.brand,
+          category: mergedFilters.productType,
+          color: mergedFilters.color,
+          page: mergedFilters.page,
+          success: ranked.length > 0,
+          sort: mergedFilters.sort || "",
+          maxPrice: mergedFilters.maxPrice ?? null,
+        });
+      }
 
      // ✅ Save AFTER buildResponse
       updateMemory(sessionId, {
@@ -1054,7 +1077,7 @@ console.log("Compare memory:", getMemory(sessionId).lastResults?.length);
         lastResults: ranked,
         pendingAction: response.pendingAction || "",
       });
-console.log("After updateMemory:", getMemory(sessionId).lastResults?.length);
+
       return res.json(response);
 
     }

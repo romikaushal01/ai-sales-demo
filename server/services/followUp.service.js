@@ -31,6 +31,18 @@ function detectFollowUp(text) {
 		};
 	}
 
+  // Show More
+  if (
+    text === "show more" ||
+    text === "more" ||
+    text === "next" ||
+    text === "next page"
+  ) {
+    return {
+      type: "show-more",
+    };
+  }
+
   // Compare Products
   if (
     text.includes("compare") ||
@@ -343,11 +355,11 @@ function detectFollowUp(text) {
 
   // Buy Recommended Product
   if (
-    text === "buy it" ||
-    text === "buy this" ||
-    text === "purchase it" ||
-    text === "i'll take it" ||
-    text === "i will take it"
+    text.includes("buy recommended") ||
+    text.includes("buy it") ||
+    text.includes("buy this") ||
+    text.includes("purchase it") ||
+    text.includes("take it")
   ) {
     return {
       type: "buy-recommended",
