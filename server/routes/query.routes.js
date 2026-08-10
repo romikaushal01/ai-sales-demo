@@ -95,9 +95,6 @@ router.post("/", async (req, res) => {
 
       const followUp = detectFollowUp(text);
 
-      console.log("Incoming message:", message);
-console.log("FOLLOW UP:", followUp);
-
       // Follow-up questions
       if (followUp && memory.lastResults?.length) {
 
@@ -867,7 +864,7 @@ console.log("FOLLOW UP:", followUp);
             memory,
             product
           );
-          console.log("ADD TO CART EVENT FIRED");
+    
           trackEvent({
             event: "ADD_TO_CART",
             sessionId,

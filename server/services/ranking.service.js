@@ -63,22 +63,28 @@ if (onlyAvailability) {
 
       }
       // Keywords
+      let keywordMatch = false;
+
       filters.keywords.forEach((keyword) => {
 
         if (title.includes(keyword)) {
           score += 80;
+          keywordMatch = true;
         }
 
         if (type.includes(keyword)) {
           score += 60;
+          keywordMatch = true;
         }
 
         if (tags.includes(keyword)) {
           score += 50;
+          keywordMatch = true;
         }
 
         if (description.includes(keyword)) {
           score += 30;
+          keywordMatch = true;
         }
 
       });
@@ -112,7 +118,7 @@ if (onlyAvailability) {
 
       }
 
-      return { ...p, score };
+      return { ...p, score, keywordMatch };
     })
 
     // STEP 1: Rank by score
@@ -132,6 +138,10 @@ if (onlyAvailability) {
 
         if (onlySorting) {
           return true;
+        }
+
+        if (filters.keywords?.length > 0 && !p.keywordMatch) {
+          return false;
         }
 
         return p.score > 20;

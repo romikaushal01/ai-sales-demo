@@ -2,6 +2,7 @@ import React from "react";
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import { searchProducts } from "./utils/searchProducts";
+import Dashboard from "./pages/Dashboard";
 
 export default function App() {
 
@@ -105,6 +106,8 @@ export default function App() {
 
   };
   return (
+    <>
+    <Dashboard />
     <div className="chat-app">
       {isOpen && (
 
@@ -252,5 +255,6 @@ export default function App() {
         {isOpen ? "✕" : "💬"}
       </button>
     </div>
+    </>
   );
 }

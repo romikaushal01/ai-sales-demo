@@ -8,11 +8,11 @@ const {
 
 
 router.get("/", (req, res) => {
+  const period = req.query.period || "all";
 
-  const analytics = getAnalytics();
+  const analytics = getAnalytics(period);
 
   res.json(analytics);
-
 });
 
 module.exports = router;
