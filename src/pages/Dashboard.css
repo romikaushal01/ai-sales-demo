@@ -58,11 +58,9 @@
   width: 52px;
   height: 52px;
   border-radius: 12px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   background: #eef2ff;
   color: #4f46e5;
 }
@@ -85,7 +83,43 @@
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
+.analytics-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content:center;
+  gap: 20px;
+}
+.trend-card .analytics-card-header{
+  justify-content:space-between;
+}
 
+.export-button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.export-button:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.export-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.export-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .analytics-card-header h2 {
   margin: 0;
   font-size: 20px;
@@ -105,28 +139,37 @@
 }
 
 .search-row {
-  display: grid;
-  grid-template-columns: 35px 1fr auto;
+  display: flex;
   align-items: center;
   gap: 12px;
   padding: 14px 0;
   border-top: 1px solid #f0f0f0;
 }
-
 .search-rank {
   color: #6b7280;
   font-size: 13px;
   font-weight: 600;
 }
-
 .search-name {
   color: #111827;
   font-size: 15px;
   font-weight: 500;
   text-align:left;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  
 }
 
 .search-count {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
   color: #6b7280;
   font-size: 14px;
 }
@@ -320,6 +363,11 @@
 
 .intelligence-section {
   min-width: 0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 10px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .intelligence-section h3 {
@@ -420,6 +468,45 @@
   font-weight: 600;
   color: #1e293b;
 }
+.no-result-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.no-result-badge,
+.opportunity-badge {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.popular-search-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.opportunity-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
 
 /* Tablet */
 @media (max-width: 1000px) {
@@ -474,5 +561,74 @@
     width: 100%;
     max-width: 180px;
   }
+ .analytics-card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .export-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .export-actions .export-button {
+    width: 100%;
+    max-width: none;
+  }
+  .no-result-badge {
+    margin-left: 4px;
+    padding: 3px 6px;
+    font-size: 10px;
+  }
+  .no-result-search-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .no-result-search-row .search-name {
+    flex: 1;
+    min-width: 140px;
+    white-space: normal;
+    line-height: 1.4;
+  }
+
+  .no-result-search-row .search-count {
+    margin-left: auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 5px;
+  }
+
+  .no-result-search-row .no-result-badge,
+  .no-result-search-row .opportunity-badge {
+    white-space: nowrap;
+  }
+  .activity-row {
+    grid-template-columns: 38px 1fr;
+    gap: 10px;
+    padding: 14px 0;
+  }
+
+.activity-icon {
+  width: 34px;
+  height: 34px;
+  font-size: 16px;
+}
+
+.activity-info strong {
+  font-size: 13px;
+}
+
+.activity-info span {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.activity-time {
+  grid-column: 2;
+  font-size: 11px;
+  margin-top: -4px;
+}
 
 }

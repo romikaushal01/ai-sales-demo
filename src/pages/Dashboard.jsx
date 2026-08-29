@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import Pagination from "../components/common/Pagination";
+import usePagination from "../hooks/usePagination";
 import {
   Search,
   ShoppingCart,
@@ -23,9 +25,6 @@ export default function Dashboard() {
   const [analytics, setAnalytics] = useState(null);
   const [period, setPeriod] = useState("all");
 
-  const [activityPage, setActivityPage] = useState(1);
-  const ACTIVITY_PER_PAGE = 7;
-
   useEffect(() => {
     loadAnalytics(period);
   }, [period]);
@@ -40,16 +39,215 @@ export default function Dashboard() {
     }
   }
 
-  const recentEvents = analytics?.recentEvents || [];
+  function exportTrendCSV() {
+    if (!analytics.trend?.length) {
+      return;
+    }
 
-  const totalActivityPages = Math.max(
-    1,
-    Math.ceil(recentEvents.length / ACTIVITY_PER_PAGE)
+    const headers = [
+      "Date",
+      "Searches",
+      "Recommendations",
+      "Add To Cart",
+      "Checkout",
+    ];
+
+    const rows = analytics.trend.map(item => [
+      item.date,
+      item.searches,
+      item.recommendations,
+      item.addToCart,
+      item.checkout,
+    ]);
+
+    const csv = [
+      headers,
+      ...rows,
+    ]
+      .map(row =>
+        row
+          .map(value => `"${String(value).replace(/"/g, '""')}"`)
+          .join(",")
+      )
+      .join("\n");
+
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `ai-analytics-${period}.csv`;
+
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  function exportFullAnalyticsCSV() {
+    const rows = [];
+
+    // Overview
+    rows.push(["OVERVIEW"]);
+    rows.push(["Metric", "Value"]);
+    rows.push(["Total Events", analytics.overview?.totalEvents || 0]);
+    rows.push(["Total Searches", analytics.overview?.totalSearches || 0]);
+    rows.push([
+      "Total Recommendations",
+      analytics.overview?.totalRecommendations || 0,
+    ]);
+    rows.push([
+      "Total Add To Cart",
+      analytics.overview?.totalAddToCart || 0,
+    ]);
+    rows.push([
+      "Total Checkout Clicks",
+      analytics.overview?.totalCheckoutClicks || 0,
+    ]);
+
+    rows.push([]);
+
+    // Helper
+    const addSection = (title, items, countLabel) => {
+      rows.push([title]);
+      rows.push(["Rank", "Value", "Count"]);
+
+      if (items?.length) {
+        items.forEach((item, index) => {
+          rows.push([
+            index + 1,
+            item.value,
+            `${item.count} ${countLabel}${item.count === 1 ? "" : "s"}`,
+          ]);
+        });
+      } else {
+        rows.push(["", "No data", ""]);
+      }
+
+      rows.push([]);
+    };
+
+    addSection(
+      "TOP SEARCHES",
+      analytics.topSearches,
+      "search"
+    );
+
+    addSection(
+      "NO-RESULT SEARCHES",
+      analytics.noResultSearches,
+      "search"
+    );
+
+    addSection(
+      "TOP BRANDS",
+      analytics.topBrands,
+      "search"
+    );
+
+    addSection(
+      "TOP CATEGORIES",
+      analytics.topCategories,
+      "search"
+    );
+
+    addSection(
+      "TOP COLORS",
+      analytics.topColors,
+      "search"
+    );
+
+    addSection(
+      "TOP PRODUCTS",
+      analytics.topProducts,
+      "add to cart"
+    );
+
+    addSection(
+      "TOP RECOMMENDATIONS",
+      analytics.topRecommendations,
+      "recommendation"
+    );
+
+    // Trend
+    rows.push(["TREND ANALYTICS"]);
+    rows.push([
+      "Date",
+      "Searches",
+      "Recommendations",
+      "Add To Cart",
+      "Checkout",
+    ]);
+
+    analytics.trend?.forEach((item) => {
+      rows.push([
+        item.date,
+        item.searches,
+        item.recommendations,
+        item.addToCart,
+        item.checkout,
+      ]);
+    });
+
+    const csv = rows
+      .map((row) =>
+        row
+          .map((value) =>
+            `"${String(value ?? "").replace(/"/g, '""')}"`
+          )
+          .join(",")
+      )
+      .join("\n");
+
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `ai-full-analytics-${period}.csv`;
+
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  const ITEMS_PER_PAGE = 7;
+
+  const {
+    currentPage: activityPage,
+    totalPages: totalActivityPages,
+    paginatedData: paginatedActivities,
+    setCurrentPage: setActivityPage,
+  } = usePagination(
+    analytics?.recentEvents || [],
+    ITEMS_PER_PAGE
   );
-
-  const paginatedActivities = recentEvents.slice(
-    (activityPage - 1) * ACTIVITY_PER_PAGE,
-    activityPage * ACTIVITY_PER_PAGE
+  const {
+    currentPage: searchPage,
+    totalPages: totalSearchPages,
+    paginatedData: paginatedSearches,
+    setCurrentPage: setSearchPage,
+  } = usePagination(
+    analytics?.topSearches || [],
+    ITEMS_PER_PAGE
+  );
+  const {
+    currentPage: noResultPage,
+    totalPages: totalNoResultPages,
+    paginatedData: paginatedNoResultSearches,
+    setCurrentPage: setNoResultPage,
+  } = usePagination(
+    analytics?.noResultSearches || [],
+    ITEMS_PER_PAGE
   );
 
   if (!analytics) {
@@ -137,10 +335,10 @@ export default function Dashboard() {
 
           <div className="search-list">
             {analytics.topSearches?.length > 0 ? (
-              analytics.topSearches.map((item, index) => (
+              paginatedSearches.map((item, index) => (
                 <div className="search-row" key={index}>
                   <div className="search-rank">
-                    #{index + 1}
+                    #{(searchPage - 1) * ITEMS_PER_PAGE + index + 1}
                   </div>
 
                   <div className="search-name">
@@ -150,6 +348,12 @@ export default function Dashboard() {
                   <div className="search-count">
                     {item.count}
                     {item.count === 1 ? " search" : " searches"}
+
+                    {index === 0 && searchPage === 1 && (
+                      <span className="popular-search-badge">
+                        🔥 Most searched
+                      </span>
+                    )}
                   </div>
                 </div>
               ))
@@ -159,6 +363,11 @@ export default function Dashboard() {
               </p>
             )}
           </div>
+          <Pagination
+            currentPage={searchPage}
+            totalPages={totalSearchPages}
+            onPageChange={setSearchPage}
+          />
         </div>
 
         {/* Top Products */}
@@ -242,10 +451,10 @@ export default function Dashboard() {
 
           <div className="search-list">
             {analytics.noResultSearches?.length > 0 ? (
-              analytics.noResultSearches.map((item, index) => (
-                <div className="search-row" key={index}>
+              paginatedNoResultSearches.map((item, index) => (
+                <div className="search-row no-result-search-row" key={index}>
                   <div className="search-rank">
-                    #{index + 1}
+                    #{(noResultPage - 1) * ITEMS_PER_PAGE + index + 1}
                   </div>
 
                   <div className="search-name">
@@ -255,6 +464,15 @@ export default function Dashboard() {
                   <div className="search-count">
                     {item.count}
                     {item.count === 1 ? " search" : " searches"}
+                    <span className="no-result-badge">
+                      ⚠️ No results
+                    </span>
+
+                    {index === 0 && (
+                      <span className="opportunity-badge">
+                        💡 Product opportunity
+                      </span>
+                    )}
                   </div>
                 </div>
               ))
@@ -264,6 +482,11 @@ export default function Dashboard() {
               </p>
             )}
           </div>
+          <Pagination
+            currentPage={noResultPage}
+            totalPages={totalNoResultPages}
+            onPageChange={setNoResultPage}
+          />
         </div>
       </div>
       
@@ -279,7 +502,10 @@ export default function Dashboard() {
         <div className="activity-list">
           {analytics.recentEvents?.length > 0 ? (
             paginatedActivities.map((event, index) => (
-              <div className="activity-row" key={index}>
+              <div
+                className={`activity-row activity-${event.event.toLowerCase()}`}
+                key={index}
+              >
 
                 <div className="activity-icon">
                   {event.event === "SEARCH_PRODUCT" && "🔍"}
@@ -318,33 +544,11 @@ export default function Dashboard() {
             <p className="empty-text">No recent activity yet.</p>
           )}
         </div>
-        {totalActivityPages > 1 && (
-          <div className="activity-pagination">
-            <button
-              onClick={() =>
-                setActivityPage((prev) => Math.max(1, prev - 1))
-              }
-              disabled={activityPage === 1}
-            >
-              ← Previous
-            </button>
-
-            <span>
-              Page {activityPage} of {totalActivityPages}
-            </span>
-
-            <button
-              onClick={() =>
-                setActivityPage((prev) =>
-                  Math.min(totalActivityPages, prev + 1)
-                )
-              }
-              disabled={activityPage === totalActivityPages}
-            >
-              Next →
-            </button>
-          </div>
-        )}
+        <Pagination
+          currentPage={activityPage}
+          totalPages={totalActivityPages}
+          onPageChange={setActivityPage}
+        />
       </div>
 
       {/* Conversion Funnel */}
@@ -682,6 +886,23 @@ export default function Dashboard() {
             <h2>Trend Analytics</h2>
             <p>AI shopping activity over time</p>
           </div>
+          <div className="export-actions">
+            <button
+              className="export-button"
+              onClick={exportTrendCSV}
+              disabled={!analytics.trend?.length}
+            >
+              ↓ Trend CSV
+            </button>
+
+            <button
+              className="export-button"
+              onClick={exportFullAnalyticsCSV}
+              disabled={!analytics}
+            >
+              ↓ Full Analytics
+            </button>
+          </div>
         </div>
 
         <div className="trend-chart">
@@ -690,7 +911,15 @@ export default function Dashboard() {
               <LineChart data={analytics.trend}>
                 <CartesianGrid strokeDasharray="3 3" />
 
-                <XAxis dataKey="date" />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(date) =>
+                    new Date(`${date}T00:00:00`).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })
+                  }
+                />
 
                 <YAxis allowDecimals={false} />
 
@@ -715,31 +944,35 @@ export default function Dashboard() {
                   }}
                 />
                 <Line
-                  type="monotone"
+                  type="linear"
                   dataKey="searches"
                   name="Searches"
                   strokeWidth={2}
+                  stroke="#3b82f6"
                 />
 
                 <Line
-                  type="monotone"
+                  type="linear"
                   dataKey="recommendations"
                   name="Recommendations"
                   strokeWidth={2}
+                  stroke="#8b5cf6"
                 />
 
                 <Line
-                  type="monotone"
+                  type="linear"
                   dataKey="addToCart"
                   name="Add To Cart"
                   strokeWidth={2}
+                  stroke="#f59e0b"
                 />
 
                 <Line
-                  type="monotone"
+                  type="linear"
                   dataKey="checkout"
                   name="Checkout"
                   strokeWidth={2}
+                  stroke="#10b981"
                 />
               </LineChart>
             </ResponsiveContainer>

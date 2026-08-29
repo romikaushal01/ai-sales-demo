@@ -1,10 +1,18 @@
 const getCatalog = require("./catalog.service");
+const normalizeProductType = (value = "") =>
+  value
+    .toLowerCase()
+    .replace(/[-_]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
 function extractBrand(text, vendorIndex = {}) {
 
   text = text.toLowerCase();
 
-  const words = text.split(/[\s-]+/);
+  const words = text.split(/[\s-]+/).map(word =>
+    word.replace(/[?!.,]+$/g, "")
+  );
 
   for (const word of words) {
 
@@ -19,9 +27,46 @@ function extractBrand(text, vendorIndex = {}) {
 }
 
 function extractProductType(text, productTypes = []) {
+  const normalizedText = text
+    .toLowerCase()
+    .replace(/[-_]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
+  // First: match actual Shopify product types dynamically
+  const matchedType = productTypes.find((type) => {
+
+    const normalizedType = normalizeProductType(type);
+
+    if (normalizedText.includes(normalizedType)) {
+      return true;
+    }
+
+    const queryWords = normalizedText
+      .split(" ")
+      .filter(Boolean);
+
+    const typeWords = normalizedType
+      .split(" ")
+      .filter(Boolean);
+
+    return typeWords.every(typeWord =>
+      queryWords.some(queryWord =>
+        queryWord === typeWord ||
+        queryWord.startsWith(typeWord) ||
+        typeWord.startsWith(queryWord)
+      )
+    );
+  });
+  
+
+  if (matchedType) {
+    return matchedType;
+  }
+
+  // Common language variations
   const aliases = {
-    "shoes": [
+    shoes: [
       "shoe",
       "shoes",
       "sneaker",
@@ -35,31 +80,35 @@ function extractProductType(text, productTypes = []) {
       "shirts",
       "t shirt",
       "t shirts",
-      "t-shirt",
-      "t-shirts",
+      "tshirt",
+      "tshirts",
       "tee",
       "tees",
     ],
 
-    "hoodie": [
+    hoodie: [
       "hoodie",
       "hoodies",
     ],
   };
 
-  // Check aliases first
   for (const [productType, words] of Object.entries(aliases)) {
-    if (words.some(word => text.includes(word))) {
+    if (
+      words.some((word) => {
+        const normalizedWord = word
+          .toLowerCase()
+          .replace(/[-_]/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+
+        return normalizedText.includes(normalizedWord);
+      })
+    ) {
       return productType;
     }
   }
 
-  // Fallback to exact Shopify product types
-  return (
-    productTypes.find(type =>
-      text.includes(type.toLowerCase())
-    ) || ""
-  );
+  return "";
 }
 
 function extractColor(text) {
@@ -181,6 +230,7 @@ function extractSort(text) {
   // Cheapest
   if (
     text.includes("cheapest") ||
+    text.includes("cheap") ||
     text.includes("lowest price") ||
     text.includes("low to high") ||
     text.includes("price low to high")
@@ -247,6 +297,18 @@ const ignoreWords = [
   "a",
   "an",
 
+  "show",
+  "me",
+  "want",
+  "something",   
+  "need", 
+  "are",
+  "any",
+
+  // Conversation words
+  "what",
+  "about",
+ 
   // Sorting words
   "best",
   "seller",
@@ -278,15 +340,41 @@ const ignoreWords = [
       if (ignoreWords.includes(word)) return false;
 
       // Remove brand words
-      if (brand && brand.includes(word)) return false;
+      if (
+        brand &&
+        brand.includes(word.replace(/[?!.,]+$/g, ""))
+      ) {
+        return false;
+      }
 
       // Remove product type words
-      if (productType && productType.includes(word)) return false;
+      if (productType) {
+        const productTypeWords = normalizeProductType(productType)
+          .split(" ")
+          .filter(Boolean);
+
+        const normalizedWord = normalizeProductType(word);
+
+        if (
+          productTypeWords.some(typeWord =>
+            typeWord === normalizedWord ||
+            typeWord.startsWith(normalizedWord) ||
+            normalizedWord.startsWith(typeWord)
+          )
+        ) {
+          return false;
+        }
+      }
 
       if (word === color) return false;
       if (!isNaN(word)) return false;
 
+      // Remove price values like $80, ₹500, £50, €100
+      //if (/^[$₹£€]?\d+$/.test(word)) return false;
+      if (/^[$₹£€]?\d+[?!.,]*$/.test(word)) return false;
+
       return true;
+
     });
 }
 
@@ -295,21 +383,25 @@ async function parseQuery(text = "") {
 
   const catalog = await getCatalog();
 
+  const detectedProductType = extractProductType(
+    text,
+    catalog.productTypes
+  );
+  
+  const extractedKeywords = extractKeywords(
+    text,
+    catalog.vendorIndex,
+    catalog.productTypes
+  );
+
   return {
     brand: extractBrand(text, catalog.vendorIndex),
-    productType: extractProductType(
-      text,
-      catalog.productTypes
-    ),
+    productType: detectedProductType,
     color: extractColor(text),
     maxPrice: extractPrice(text),
     sort: extractSort(text),
     availability: extractAvailability(text),
-    keywords: extractKeywords(
-      text,
-      catalog.vendorIndex,
-      catalog.productTypes
-    ),
+    keywords: extractedKeywords,
   };
 }
 

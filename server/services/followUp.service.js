@@ -55,6 +55,34 @@ function detectFollowUp(text) {
     };
   }
 
+  // Add to Cart
+  const addToCartMatch = text.match(
+    /(add|buy|purchase).*(first|second|third|1st|2nd|3rd)|^(add|buy|purchase)( this)? to cart$/
+  );
+
+  if (addToCartMatch) {
+
+    let index = 0;
+
+    if (
+      text.includes("second") ||
+      text.includes("2nd")
+    ) {
+      index = 1;
+    }
+    else if (
+      text.includes("third") ||
+      text.includes("3rd")
+    ) {
+      index = 2;
+    }
+
+    return {
+      type: "add-to-cart",
+      index,
+    };
+  }
+
   // Product Details
   if (
     text.includes("tell me more") ||
@@ -76,7 +104,7 @@ function detectFollowUp(text) {
     text.includes("recommended one") ||
     text.includes("which one do you recommend")
   ) {
-    console.log("BETTER PRODUCT DETECTED");
+    
     return {
       type: "better-product",
     };
@@ -152,6 +180,7 @@ function detectFollowUp(text) {
     (
       text.startsWith("only") ||
       text.includes("show only") ||
+      text.includes("show me") ||
       text.includes("filter")
     )
   ) {
@@ -195,34 +224,6 @@ function detectFollowUp(text) {
     return {
       type: "size-filter",
       size: selectedSize,
-    };
-  }
-
-  // Add to Cart
-  const addToCartMatch = text.match(
-    /(add|buy|purchase).*(first|second|third|1st|2nd|3rd)|^(add|buy|purchase)( this)? to cart$/
-  );
-
-  if (addToCartMatch) {
-
-    let index = 0;
-
-    if (
-      text.includes("second") ||
-      text.includes("2nd")
-    ) {
-      index = 1;
-    }
-    else if (
-      text.includes("third") ||
-      text.includes("3rd")
-    ) {
-      index = 2;
-    }
-
-    return {
-      type: "add-to-cart",
-      index,
     };
   }
 

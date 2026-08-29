@@ -1004,7 +1004,8 @@ router.post("/", async (req, res) => {
       if (
         !products.length &&
         !mergedFilters.maxPrice &&
-        !mergedFilters.availability
+        !mergedFilters.availability &&
+        !mergedFilters.brand
       ) {
 
         // Fallback 1
@@ -1018,7 +1019,7 @@ router.post("/", async (req, res) => {
           products = await fetchShopifyProducts({
             ...mergedFilters,
             brand: "",
-            productType: "",
+            //productType: "",
           });
         }
       }

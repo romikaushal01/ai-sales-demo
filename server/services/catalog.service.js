@@ -1,4 +1,5 @@
 const fetchShopifyProducts = require("./shopify.service");
+const { fetchAllShopifyProducts } = require("./shopify.service");
 
 let catalog = null;
 
@@ -24,7 +25,7 @@ async function getCatalog() {
   }
 
   // Fetch all products
-  const products = await fetchShopifyProducts({});
+  const products = await fetchAllShopifyProducts();
 
   const vendors = new Set();
   const productTypes = new Set();

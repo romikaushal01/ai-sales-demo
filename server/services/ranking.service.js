@@ -1,3 +1,33 @@
+const normalizeProductType = (value = "") =>
+  value
+    .toLowerCase()
+    .replace(/[-_]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+function productTypeMatches(queryType, actualType) {
+  const queryWords = normalizeProductType(queryType)
+    .split(" ")
+    .filter(Boolean);
+
+  const actualWords = normalizeProductType(actualType)
+    .split(" ")
+    .filter(Boolean);
+
+  if (!queryWords.length || !actualWords.length) {
+    return false;
+  }
+
+  // Every query word must match an actual product-type word
+  return queryWords.every(queryWord =>
+    actualWords.some(actualWord =>
+      actualWord === queryWord ||
+      actualWord.startsWith(queryWord) ||
+      queryWord.startsWith(actualWord)
+    )
+  );
+}
+
 function rankProducts(products, filters) {
 
   // Only availability filter (no search query)
@@ -25,8 +55,8 @@ if (onlyAvailability) {
       const vendor = (p.vendor || "").toLowerCase();
 
       const tags = (p.tags || []).join(" ").toLowerCase();
-      const description = (p.description || "").toLowerCase();
-
+      const description = (p.description || "").toLowerCase();      
+      
       if (filters.brand && vendor.includes(filters.brand)) {
         score += 120;
       }
@@ -34,20 +64,22 @@ if (onlyAvailability) {
       // Product Type
       if (filters.productType) {
 
-        if (type.includes(filters.productType)) {
+        const normalizedFilterType =
+          normalizeProductType(filters.productType);
+
+        if (productTypeMatches(normalizedFilterType, type)) {
           score += 100;
         }
 
-        if (title.includes(filters.productType)) {
+        if (normalizeProductType(title).includes(normalizedFilterType)) {
           score += 70;
         }
 
-        if (tags.includes(filters.productType)) {
+        if (normalizeProductType(tags).includes(normalizedFilterType)) {
           score += 50;
         }
 
       }
-      
 
       // Color (future use)
       if (filters.color) {
@@ -67,22 +99,53 @@ if (onlyAvailability) {
 
       filters.keywords.forEach((keyword) => {
 
-        if (title.includes(keyword)) {
+        const normalizedKeyword =
+          normalizeProductType(keyword);
+
+        const normalizedTitle =
+          normalizeProductType(title);
+
+        const normalizedType =
+          normalizeProductType(type);
+
+        const normalizedTags =
+          normalizeProductType(tags);
+
+        const normalizedDescription =
+          normalizeProductType(description);
+
+        if (normalizedTitle.split(" ").some(word =>
+          word === normalizedKeyword ||
+          word.startsWith(normalizedKeyword) ||
+          normalizedKeyword.startsWith(word)
+        )) {
           score += 80;
           keywordMatch = true;
         }
 
-        if (type.includes(keyword)) {
+        if (normalizedType.split(" ").some(word =>
+          word === normalizedKeyword ||
+          word.startsWith(normalizedKeyword) ||
+          normalizedKeyword.startsWith(word)
+        )) {
           score += 60;
           keywordMatch = true;
         }
 
-        if (tags.includes(keyword)) {
+        if (normalizedTags.split(" ").some(word =>
+          word === normalizedKeyword ||
+          word.startsWith(normalizedKeyword) ||
+          normalizedKeyword.startsWith(word)
+        )) {
           score += 50;
           keywordMatch = true;
         }
 
-        if (description.includes(keyword)) {
+        if (normalizedDescription.split(" ").some(word =>
+          word === normalizedKeyword ||
+          word.startsWith(normalizedKeyword) ||
+          normalizedKeyword.startsWith(word)
+        )) {
           score += 30;
           keywordMatch = true;
         }
