@@ -54,6 +54,7 @@ export default function App() {
   }, [messages, loading]);
 
   const [products, setProducts] = useState([]);
+  const API = import.meta.env.VITE_API_URL;
 
   const handleSend = async (customMessage = null) => {
     const text = customMessage || message;
@@ -73,7 +74,7 @@ export default function App() {
     setMessage("");
 
     try {
-      const res = await fetch("http://localhost:5000/chat", {
+      const res = await fetch(`${API}/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -85,7 +86,6 @@ export default function App() {
       });
 
       const data = await res.json();
-      console.log("API RESPONSE:", data);
       const aiMessage = {
         sender: "ai",
         text: data.reply,
