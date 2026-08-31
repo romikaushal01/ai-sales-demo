@@ -150,6 +150,15 @@ router.post("/", async (req, res) => {
 
           }
 
+          trackEvent({
+            event: "RECOMMEND_PRODUCT",
+            sessionId,
+            productTitle: recommended.title,
+            productPrice: recommended.price,
+            productVendor: recommended.vendor,
+            productType: recommended.productType,
+          });
+
           return res.json({
             reply: `⭐ My recommendation is ${recommended.title}. It's one of the best matches based on what you're looking for.`,
             products: [recommended],
@@ -358,8 +367,14 @@ router.post("/", async (req, res) => {
           }
 
           // Update memory with filtered results
+          // updateMemory(sessionId, {
+          //   ...memory,
+          //   lastResults: filtered,
+          // });
+
           updateMemory(sessionId, {
             ...memory,
+            color: followUp.color,
             lastResults: filtered,
           });
 
@@ -458,6 +473,16 @@ router.post("/", async (req, res) => {
             memory,
             product
           );
+
+          // Track Add To Cart
+          trackEvent({
+            event: "ADD_TO_CART",
+            sessionId,
+            productTitle: product.title,
+            productPrice: product.price,
+            productVendor: product.vendor,
+            productType: product.productType,
+          });
 
           return res.json({
             reply: `🛒 ${product.title} has been added to your cart.`,

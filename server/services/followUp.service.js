@@ -171,10 +171,20 @@ function detectFollowUp(text) {
     "mint",
   ];
 
-  const selectedColor = colors.find(color =>
-    text.toLowerCase().includes(color.toLowerCase())
-  );
+  // const selectedColor = colors.find(color =>
+  //   text.toLowerCase().includes(color.toLowerCase())
+  // );
 
+  const selectedColor = colors.find(color => {
+    const colorPattern = new RegExp(
+      `\\b${color.replace(/\s+/g, "\\s+")}\\b`,
+      "i"
+    );
+
+    return colorPattern.test(text);
+  });
+
+  
   if (
     selectedColor &&
     (
