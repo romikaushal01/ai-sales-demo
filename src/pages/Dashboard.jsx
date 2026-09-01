@@ -250,10 +250,9 @@ export default function Dashboard() {
     ITEMS_PER_PAGE
   );
 
-  if (!analytics) {
+  if (!analytics?.overview) {
     return <div className="dashboard-loading">Loading...</div>;
   }
-
   const searches = analytics.overview.totalSearches;
   const recommendations = analytics.overview.totalRecommendations;
   const addToCart = analytics.overview.totalAddToCart;
