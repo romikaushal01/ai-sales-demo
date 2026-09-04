@@ -153,6 +153,12 @@ async function fetchShopifyProducts(filters = {}) {
 
   });
 
+  console.log(
+  "PRODUCT DESCRIPTION:",
+  products[0]?.title,
+  products[0]?.description
+);
+
   // Strict keyword filtering
   if (
     filters.keywords &&
