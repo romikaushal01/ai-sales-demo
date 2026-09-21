@@ -1,0 +1,1852 @@
+<!-- <div id="ai-sales-chatbot-root"></div>
+
+<style>
+#ai-sales-chatbot-root {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 999999;
+  font-family: Inter, Arial, sans-serif;
+}
+
+#ai-sales-chatbot-root * {
+  box-sizing: border-box;
+}
+
+.ai-chat-window {
+  width: 390px;
+  height: 680px;
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  display: none;
+  flex-direction: column;
+  box-shadow: 0 18px 45px rgba(0,0,0,.18);
+  margin-bottom: 15px;
+}
+
+.ai-chat-window.open {
+  display: flex;
+}
+
+.ai-chat-header {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  background: white;
+  border-bottom: 1px solid #ececec;
+  flex-shrink: 0;
+}
+
+.ai-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: #f8fafc;
+}
+
+.ai-message {
+  animation: aiFadeUp .25s ease;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.ai-message.user {
+  align-self: flex-end;
+  max-width: 78%;
+  padding: 14px 18px;
+  border-radius: 18px 18px 4px 18px;
+  background: #2563eb;
+  color: white;
+}
+
+.ai-message.bot {
+  width: 100%;
+  padding: 18px;
+  border-radius: 18px;
+  background: #eef4ff;
+  color: #374151;
+}
+
+.ai-message.bot.typing {
+  width: fit-content;
+  background: white;
+  color: #777;
+  font-style: italic;
+  opacity: .7;
+}
+
+.ai-chat-input {
+  display: flex;
+  gap: 10px;
+  padding: 16px;
+  border-top: 1px solid #ececec;
+  background: white;
+  flex-shrink: 0;
+}
+
+.ai-chat-input input {
+  flex: 1;
+  height: 46px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 0 15px;
+  font-size: 15px;
+  outline: none;
+}
+
+.ai-chat-input input:focus {
+  border-color: #2563eb;
+}
+
+.ai-chat-input button {
+  width: 90px;
+  border: none;
+  border-radius: 10px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  transition: .25s;
+}
+
+.ai-chat-input button:hover {
+  background: #1d4ed8;
+}
+
+.ai-chat-input button:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+.ai-chat-toggle {
+  width: 64px;
+  height: 64px;
+  margin-top: 15px;
+  margin-left: auto;
+  display: block;
+  border: none;
+  border-radius: 50%;
+  background: #2563eb;
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(37,99,235,.35);
+  transition: .25s;
+}
+
+.ai-chat-toggle:hover {
+  transform: scale(1.08);
+  background: #1d4ed8;
+}
+
+/* Products */
+
+.ai-products {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.ai-product-card {
+  padding: 10px;
+  border-radius: 10px;
+  background: #fff;
+  transition: .25s;
+}
+
+.ai-product-card:hover {
+  box-shadow: 0 10px 20px rgba(0,0,0,.12);
+}
+
+.ai-product-card img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+  transition: .3s;
+}
+
+.ai-product-card:hover img {
+  transform: scale(1.05);
+}
+
+.ai-product-card h4 {
+  font-size: 14px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 5px 0;
+}
+
+.ai-product-brand {
+  font-size: 12px;
+  color: #777;
+  margin: 0;
+}
+
+.ai-product-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2563eb;
+  margin: 5px 0;
+}
+
+.ai-view-product {
+  display: inline-block;
+  width: 100%;
+  padding: 6px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  background: #2563eb;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: .2s;
+}
+
+.ai-view-product:hover {
+  background: #1d4ed8;
+}
+
+/* Suggestions */
+
+.ai-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.ai-suggestion-chip {
+  border: none;
+  border-radius: 20px;
+  padding: 8px 14px;
+  cursor: pointer;
+  background: #f3f3f3;
+  transition: .2s;
+}
+
+.ai-suggestion-chip:hover {
+  background: #ddd;
+}
+
+/* Show More */
+
+.ai-show-more-btn {
+  display: block;
+  width: 170px;
+  margin: 20px auto 0;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .25s;
+}
+
+.ai-show-more-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+}
+
+/* Comparison / Details */
+
+.ai-comparison-message {
+  text-align: left;
+}
+
+/* Checkout */
+
+.ai-checkout-container {
+  margin-top: 12px;
+}
+
+.ai-checkout-button {
+  display: inline-block;
+  padding: 10px 18px;
+  background: #000;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: .2s;
+}
+
+.ai-checkout-button:hover {
+  opacity: .9;
+}
+
+/* Animation */
+
+@keyframes aiFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 480px) {
+  .ai-chat-window {
+    width: calc(100vw - 30px);
+    height: 75vh;
+  }
+
+  #ai-sales-chatbot-root {
+    right: 15px;
+    bottom: 15px;
+  }
+
+  .ai-products {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+<div class="ai-chat-window" id="ai-chat-window">
+  <div class="ai-chat-header">
+    AI Sales Assistant
+  </div>
+
+  <div class="ai-chat-messages" id="ai-chat-messages">
+    <div class="ai-message bot">
+      👋 Welcome to AI Shopping Assistant!<br><br>
+      I can help you find products in this store.
+    </div>
+  </div>
+
+  <div class="ai-chat-input">
+    <input
+      id="ai-chat-input"
+      type="text"
+      placeholder="Ask about products..."
+    >
+    <button id="ai-chat-send">Send</button>
+  </div>
+</div>
+
+<button
+  type="button"
+  class="ai-chat-toggle"
+  id="ai-chat-toggle"
+  aria-label="Open AI Sales Assistant"
+>
+  💬
+</button>
+
+<script>
+(function () {
+  const API =
+    "https://ai-sales-backend-production-8938.up.railway.app";
+
+  const root = document.getElementById("ai-sales-chatbot-root");
+  const windowEl = document.getElementById("ai-chat-window");
+  const toggle = document.getElementById("ai-chat-toggle");
+  const input = document.getElementById("ai-chat-input");
+  const send = document.getElementById("ai-chat-send");
+  const messages = document.getElementById("ai-chat-messages");
+
+  if (!root || !windowEl || !toggle || !input || !send || !messages) {
+    return;
+  }
+
+  let sessionId = localStorage.getItem("ai_sales_chat_session");
+
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    localStorage.setItem("ai_sales_chat_session", sessionId);
+  }
+
+  toggle.addEventListener("click", function () {
+    windowEl.classList.toggle("open");
+
+    if (windowEl.classList.contains("open")) {
+      input.focus();
+    }
+  });
+
+  function addMessage(text, type) {
+    const div = document.createElement("div");
+    div.className = "ai-message " + type;
+    div.textContent = text;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function addBotResponse(data) {
+    const container = document.createElement("div");
+    container.className = "ai-message bot";
+
+    const reply = document.createElement("div");
+    reply.textContent = data.reply || "";
+    container.appendChild(reply);
+
+    // Products
+    if (data.products && data.products.length > 0) {
+        const productsGrid = document.createElement("div");
+        productsGrid.className = "ai-products";
+
+        data.products.forEach(function (product) {
+          const card = document.createElement("div");
+          card.className = "ai-product-card";
+
+          card.innerHTML = `
+              <img
+              src="${product.image || ""}"
+              alt="${escapeHtml(product.title || "Product")}"
+              />
+
+              <h4>${escapeHtml(product.title || "")}</h4>
+
+              <p class="ai-product-brand">
+              ${escapeHtml(product.vendor || "")}
+              </p>
+
+              <p class="ai-product-price">
+              $${product.price}
+              </p>
+
+              <a
+              href="${product.url}"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="ai-view-product"
+              >
+              View Product
+              </a>
+          `;
+
+          productsGrid.appendChild(card);
+        });
+
+        container.appendChild(productsGrid);
+    }
+
+    // Suggestions
+    if (data.suggestions && data.suggestions.length > 0) {
+      const suggestions = document.createElement("div");
+      suggestions.className = "ai-suggestions";
+
+      data.suggestions.forEach(function (suggestion) {
+        const button = document.createElement("button");
+
+        button.className = "ai-suggestion-chip";
+
+        const label =
+          typeof suggestion === "string"
+            ? suggestion
+            : suggestion.label || suggestion.value || "";
+
+        const value =
+          typeof suggestion === "string"
+            ? suggestion
+            : suggestion.value || suggestion.label || "";
+
+        button.textContent = label;
+
+        button.addEventListener("click", function () {
+          sendMessageValue(value);
+        });
+
+        suggestions.appendChild(button);
+      });
+
+      container.appendChild(suggestions);
+    }
+
+    // Checkout
+    if (data.messageType === "checkout" && data.checkoutUrl) {
+      const checkoutButton = document.createElement("a");
+
+      checkoutButton.href = data.checkoutUrl;
+      checkoutButton.target = "_blank";
+      checkoutButton.rel = "noopener noreferrer";
+      checkoutButton.className = "ai-checkout-button";
+      checkoutButton.textContent = "🛍️ Proceed to Checkout";
+
+      container.appendChild(checkoutButton);
+    }
+
+    // Show More
+    if (data.hasMore) {
+      const showMoreButton = document.createElement("button");
+
+      showMoreButton.className = "ai-show-more-btn";
+      showMoreButton.textContent = "Show More";
+
+      showMoreButton.addEventListener("click", function () {
+        sendMessageValue("show more");
+      });
+
+      container.appendChild(showMoreButton);
+    }
+    messages.appendChild(container);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+	function escapeHtml(value) {
+		const div = document.createElement("div");
+		div.textContent = value;
+		return div.innerHTML;
+	}
+
+  async function sendMessageValue(text) {
+    text = text.trim();
+
+    if (!text) return;
+
+    addMessage(text, "user");
+    input.value = "";
+    send.disabled = true;
+
+    const loading = document.createElement("div");
+    loading.className = "ai-message bot typing";
+    loading.textContent = "Searching products...";
+    messages.appendChild(loading);
+
+    try {
+      const response = await fetch(API + "/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          message: text
+        })
+      });
+
+      const data = await response.json();
+
+      loading.remove();
+
+      addBotResponse(data);
+
+    } catch (error) {
+      console.error("AI Sales Assistant error:", error);
+
+      loading.remove();
+
+      addMessage(
+        "Sorry, something went wrong. Please try again.",
+        "bot"
+      );
+    } finally {
+      send.disabled = false;
+      input.focus();
+    }
+  }
+
+  function sendMessage() {
+    sendMessageValue(input.value);
+  }
+
+  send.addEventListener("click", sendMessage);
+
+  input.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" && !send.disabled) {
+      sendMessage();
+    }
+  });
+
+})();
+</script>
+
+ -->
+
+
+<div id="ai-sales-chatbot-root"></div>
+
+<style>
+#ai-sales-chatbot-root {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 999999;
+  font-family: Inter, Arial, sans-serif;
+}
+
+#ai-sales-chatbot-root * {
+  box-sizing: border-box;
+}
+
+.ai-chat-window {
+  width: 390px;
+  height: 680px;
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  display: none;
+  flex-direction: column;
+  box-shadow: 0 18px 45px rgba(0,0,0,.18);
+  margin-bottom: 15px;
+}
+
+.ai-chat-window.open {
+  display: flex;
+}
+
+.ai-chat-header {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  background: white;
+  border-bottom: 1px solid #ececec;
+  flex-shrink: 0;
+}
+
+.ai-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: #f8fafc;
+}
+
+.ai-message {
+  animation: aiFadeUp .25s ease;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.ai-message.user {
+  align-self: flex-end;
+  max-width: 78%;
+  padding: 14px 18px;
+  border-radius: 18px 18px 4px 18px;
+  background: #2563eb;
+  color: white;
+}
+
+.ai-message.bot {
+  width: 100%;
+  padding: 18px;
+  border-radius: 18px;
+  background: #eef4ff;
+  color: #374151;
+}
+
+.ai-message.bot.typing {
+  width: fit-content;
+  background: white;
+  color: #777;
+  font-style: italic;
+  opacity: .7;
+}
+
+/* Input */
+
+.ai-chat-input {
+  display: flex;
+  gap: 10px;
+  padding: 16px;
+  border-top: 1px solid #ececec;
+  background: white;
+  flex-shrink: 0;
+}
+
+.ai-chat-input input {
+  flex: 1;
+  height: 46px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 0 15px;
+  font-size: 15px;
+  outline: none;
+}
+
+.ai-chat-input input:focus {
+  border-color: #2563eb;
+}
+
+.ai-chat-input button {
+  width: 90px;
+  border: none;
+  border-radius: 10px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  transition: .25s;
+}
+
+.ai-chat-input button:hover {
+  background: #1d4ed8;
+}
+
+.ai-chat-input button:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+/* Toggle */
+
+.ai-chat-toggle {
+  width: 64px;
+  height: 64px;
+  margin-top: 15px;
+  margin-left: auto;
+  display: block;
+  border: none;
+  border-radius: 50%;
+  background: #2563eb;
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(37,99,235,.35);
+  transition: .25s;
+}
+
+.ai-chat-toggle:hover {
+  transform: scale(1.08);
+  background: #1d4ed8;
+}
+
+/* Products */
+
+.ai-products {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.ai-product-card {
+  padding: 10px;
+  border-radius: 10px;
+  background: #fff;
+  transition: .25s;
+  overflow: hidden;
+}
+
+.ai-product-card:hover {
+  box-shadow: 0 10px 20px rgba(0,0,0,.12);
+}
+
+.ai-product-card img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+
+.ai-product-card h4 {
+  font-size: 14px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 8px 0 4px;
+}
+
+.ai-product-brand {
+  font-size: 12px;
+  color: #777;
+  margin: 0;
+}
+
+.ai-product-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2563eb;
+  margin: 5px 0 8px;
+}
+
+.ai-view-product {
+  display: inline-block;
+  width: 100%;
+  padding: 7px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  background: #2563eb;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: .2s;
+}
+
+.ai-view-product:hover {
+  background: #1d4ed8;
+}
+
+/* Suggestions */
+
+.ai-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.ai-suggestion-chip {
+  border: none;
+  border-radius: 20px;
+  padding: 8px 14px;
+  cursor: pointer;
+  background: #f3f3f3;
+  transition: .2s;
+}
+
+.ai-suggestion-chip:hover {
+  background: #ddd;
+}
+
+/* Show More */
+
+.ai-show-more-btn {
+  display: block;
+  width: 170px;
+  margin: 20px auto 0;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .25s;
+}
+
+.ai-show-more-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+}
+
+/* Checkout */
+
+.ai-checkout-container {
+  margin-top: 12px;
+}
+
+.ai-checkout-button {
+  display: inline-block;
+  padding: 10px 18px;
+  background: #000;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: .2s;
+}
+
+.ai-checkout-button:hover {
+  opacity: .9;
+}
+
+/* ================================================= */
+/* PRODUCT DETAILS */
+/* ================================================= */
+
+.ai-details-card {
+  margin-top: 14px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 5px 18px rgba(0,0,0,.08);
+}
+
+.ai-details-image {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+}
+
+.ai-details-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 12px 0 3px;
+  color: #111827;
+}
+
+.ai-details-brand {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.ai-details-price {
+  font-size: 22px;
+  font-weight: 800;
+  color: #2563eb;
+  margin: 8px 0;
+}
+
+.ai-details-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.ai-details-badge {
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.ai-details-stock {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 8px 0;
+}
+
+.ai-details-description {
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.55;
+  margin-top: 10px;
+}
+
+.ai-details-button {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  background: #2563eb;
+  color: #fff;
+}
+
+.ai-details-button:hover {
+  background: #1d4ed8;
+}
+
+/* ================================================= */
+/* COMPARISON */
+/* ================================================= */
+
+.ai-comparison {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ai-comparison-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px;
+  overflow: hidden;
+  box-shadow: 0 5px 18px rgba(0,0,0,.07);
+}
+
+.ai-comparison-image {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.ai-comparison-title {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 8px 0 4px;
+}
+
+.ai-comparison-brand {
+  color: #6b7280;
+  font-size: 11px;
+}
+
+.ai-comparison-price {
+  color: #2563eb;
+  font-size: 17px;
+  font-weight: 800;
+  margin: 6px 0;
+}
+
+.ai-comparison-button {
+  display: block;
+  width: 100%;
+  padding: 7px;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  text-decoration: none;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ai-comparison-recommendation {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fff;
+  border-left: 4px solid #2563eb;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Animation */
+
+@keyframes aiFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 480px) {
+  .ai-chat-window {
+    width: calc(100vw - 30px);
+    height: 75vh;
+  }
+
+  #ai-sales-chatbot-root {
+    right: 15px;
+    bottom: 15px;
+  }
+
+  .ai-products {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-comparison {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+</style>
+
+<div class="ai-chat-window" id="ai-chat-window">
+
+  <div class="ai-chat-header">
+    AI Sales Assistant
+  </div>
+
+  <div class="ai-chat-messages" id="ai-chat-messages">
+
+    <div class="ai-message bot">
+      👋 Welcome to AI Shopping Assistant!<br><br>
+      I can help you find products in this store.
+    </div>
+
+  </div>
+
+  <div class="ai-chat-input">
+
+    <input
+      id="ai-chat-input"
+      type="text"
+      placeholder="Ask about products..."
+    >
+
+    <button id="ai-chat-send">
+      Send
+    </button>
+
+  </div>
+
+</div>
+
+<button
+  type="button"
+  class="ai-chat-toggle"
+  id="ai-chat-toggle"
+  aria-label="Open AI Sales Assistant"
+>
+  💬
+</button>
+
+<script>
+(function () {
+
+  // const API =
+  //   "https://ai-sales-backend-production-8938.up.railway.app";
+  const API = "http://localhost:5000";
+
+  const root =
+    document.getElementById("ai-sales-chatbot-root");
+
+  const windowEl =
+    document.getElementById("ai-chat-window");
+
+  const toggle =
+    document.getElementById("ai-chat-toggle");
+
+  const input =
+    document.getElementById("ai-chat-input");
+
+  const send =
+    document.getElementById("ai-chat-send");
+
+  const messages =
+    document.getElementById("ai-chat-messages");
+
+  if (
+    !root ||
+    !windowEl ||
+    !toggle ||
+    !input ||
+    !send ||
+    !messages
+  ) {
+    return;
+  }
+
+  let sessionId =
+    localStorage.getItem("ai_sales_chat_session");
+
+  if (!sessionId) {
+
+    sessionId = crypto.randomUUID();
+
+    localStorage.setItem(
+      "ai_sales_chat_session",
+      sessionId
+    );
+
+  }
+
+  /* =============================== */
+  /* TOGGLE */
+  /* =============================== */
+
+  toggle.addEventListener("click", function () {
+
+    windowEl.classList.toggle("open");
+
+    if (windowEl.classList.contains("open")) {
+      input.focus();
+    }
+
+  });
+
+  /* =============================== */
+  /* SIMPLE MESSAGE */
+  /* =============================== */
+
+  function addMessage(text, type) {
+
+    const div =
+      document.createElement("div");
+
+    div.className =
+      "ai-message " + type;
+
+    div.textContent = text;
+
+    messages.appendChild(div);
+
+    messages.scrollTop =
+      messages.scrollHeight;
+  }
+
+  /* =============================== */
+  /* PRODUCT CARD */
+  /* =============================== */
+
+  function createProductCard(product) {
+
+    const card =
+      document.createElement("div");
+
+    card.className =
+      "ai-product-card";
+
+    const image =
+      document.createElement("img");
+
+    image.src =
+      product.image || "";
+
+    image.alt =
+      product.title || "Product";
+
+    const title =
+      document.createElement("h4");
+
+    title.textContent =
+      product.title || "";
+
+    const brand =
+      document.createElement("p");
+
+    brand.className =
+      "ai-product-brand";
+
+    brand.textContent =
+      product.vendor || "";
+
+    const price =
+      document.createElement("p");
+
+    price.className =
+      "ai-product-price";
+
+    price.textContent =
+      "$" + (product.price || "0");
+
+    const link =
+      document.createElement("a");
+
+    link.href =
+      product.url || "#";
+
+    link.target =
+      "_blank";
+
+    link.rel =
+      "noopener noreferrer";
+
+    link.className =
+      "ai-view-product";
+
+    link.textContent =
+      "View Product";
+
+    card.appendChild(image);
+    card.appendChild(title);
+    card.appendChild(brand);
+    card.appendChild(price);
+    card.appendChild(link);
+
+    return card;
+  }
+
+  /* =============================== */
+  /* PRODUCT LIST */
+  /* =============================== */
+
+  function renderProducts(container, products) {
+
+    if (
+      !products ||
+      !products.length
+    ) {
+      return;
+    }
+
+    const grid =
+      document.createElement("div");
+
+    grid.className =
+      "ai-products";
+
+    products.forEach(function (product) {
+
+      grid.appendChild(
+        createProductCard(product)
+      );
+
+    });
+
+    container.appendChild(grid);
+  }
+
+  /* =============================== */
+  /* PRODUCT DETAILS */
+  /* =============================== */
+
+  function renderProductDetails(
+    container,
+    product
+  ) {
+
+    if (!product) {
+      return;
+    }
+
+    const card =
+      document.createElement("div");
+
+    card.className =
+      "ai-details-card";
+
+    const image =
+      document.createElement("img");
+
+    image.className =
+      "ai-details-image";
+
+    image.src =
+      product.image || "";
+
+    image.alt =
+      product.title || "Product";
+
+    const title =
+      document.createElement("div");
+
+    title.className =
+      "ai-details-title";
+
+    title.textContent =
+      product.title || "Product";
+
+    const brand =
+      document.createElement("div");
+
+    brand.className =
+      "ai-details-brand";
+
+    brand.textContent =
+      product.vendor || "";
+
+    const price =
+      document.createElement("div");
+
+    price.className =
+      "ai-details-price";
+
+    price.textContent =
+      "$" + (product.price || "0");
+
+    const meta =
+      document.createElement("div");
+
+    meta.className =
+      "ai-details-meta";
+
+    if (product.productType) {
+
+      const category =
+        document.createElement("span");
+
+      category.className =
+        "ai-details-badge";
+
+      category.textContent =
+        "📂 " + product.productType;
+
+      meta.appendChild(category);
+    }
+
+    const stock =
+      document.createElement("div");
+
+    stock.className =
+      "ai-details-stock";
+
+    stock.textContent =
+      product.availableForSale
+        ? "✅ In Stock"
+        : "❌ Out of Stock";
+
+    const description =
+      document.createElement("div");
+
+    description.className =
+      "ai-details-description";
+
+    description.textContent =
+      product.description ||
+      "Product details are currently unavailable.";
+
+    card.appendChild(image);
+    card.appendChild(title);
+    card.appendChild(brand);
+    card.appendChild(price);
+    card.appendChild(meta);
+    card.appendChild(stock);
+    card.appendChild(description);
+
+    if (product.url) {
+
+      const link =
+        document.createElement("a");
+
+      link.href =
+        product.url;
+
+      link.target =
+        "_blank";
+
+      link.rel =
+        "noopener noreferrer";
+
+      link.className =
+        "ai-details-button";
+
+      link.textContent =
+        "View Product";
+
+      card.appendChild(link);
+    }
+
+    container.appendChild(card);
+  }
+
+  /* =============================== */
+  /* COMPARISON */
+  /* =============================== */
+
+  function renderComparison(
+    container,
+    products
+  ) {
+
+    if (
+      !products ||
+      products.length < 2
+    ) {
+      return;
+    }
+
+    const comparison =
+      document.createElement("div");
+
+    comparison.className =
+      "ai-comparison";
+
+    products.slice(0, 2).forEach(function (product) {
+
+      const card =
+        document.createElement("div");
+
+      card.className =
+        "ai-comparison-card";
+
+      const image =
+        document.createElement("img");
+
+      image.className =
+        "ai-comparison-image";
+
+      image.src =
+        product.image || "";
+
+      image.alt =
+        product.title || "Product";
+
+      const title =
+        document.createElement("div");
+
+      title.className =
+        "ai-comparison-title";
+
+      title.textContent =
+        product.title || "";
+
+      const brand =
+        document.createElement("div");
+
+      brand.className =
+        "ai-comparison-brand";
+
+      brand.textContent =
+        product.vendor || "";
+
+      const price =
+        document.createElement("div");
+
+      price.className =
+        "ai-comparison-price";
+
+      price.textContent =
+        "$" + (product.price || "0");
+
+      const link =
+        document.createElement("a");
+
+      link.href =
+        product.url || "#";
+
+      link.target =
+        "_blank";
+
+      link.rel =
+        "noopener noreferrer";
+
+      link.className =
+        "ai-comparison-button";
+
+      link.textContent =
+        "View Product";
+
+      card.appendChild(image);
+      card.appendChild(title);
+      card.appendChild(brand);
+      card.appendChild(price);
+      card.appendChild(link);
+
+      comparison.appendChild(card);
+
+    });
+
+    container.appendChild(comparison);
+  }
+
+  /* =============================== */
+  /* BOT RESPONSE */
+  /* =============================== */
+
+  function addBotResponse(data) {
+
+    const container =
+      document.createElement("div");
+
+    container.className =
+      "ai-message bot";
+
+    /* Main reply */
+
+    if (data.reply) {
+
+      const reply =
+        document.createElement("div");
+
+      reply.textContent =
+        data.reply;
+
+      container.appendChild(reply);
+
+    }
+
+    /* =============================== */
+    /* COMPARISON UI */
+    /* =============================== */
+
+    if (
+      data.messageType === "comparison" &&
+      data.products &&
+      data.products.length >= 2
+    ) {
+      renderComparison(
+        container,
+        data.products
+      );
+    }
+
+    /* =============================== */
+    /* DETAILS UI */
+    /* =============================== */
+
+    else if (
+      data.messageType === "details" &&
+      data.products &&
+      data.products.length
+    ) {
+
+      renderProductDetails(
+        container,
+        data.products[0]
+      );
+
+    }
+
+    /* =============================== */
+    /* NORMAL PRODUCTS */
+    /* =============================== */
+
+    else {
+
+      renderProducts(
+        container,
+        data.products
+      );
+
+    }
+
+    /* =============================== */
+    /* SUGGESTIONS */
+    /* =============================== */
+
+    if (
+      data.suggestions &&
+      data.suggestions.length
+    ) {
+
+      const suggestions =
+        document.createElement("div");
+
+      suggestions.className =
+        "ai-suggestions";
+
+      data.suggestions.forEach(
+        function (suggestion) {
+
+          const button =
+            document.createElement("button");
+
+          button.className =
+            "ai-suggestion-chip";
+
+          const label =
+            typeof suggestion === "string"
+              ? suggestion
+              : suggestion.label ||
+                suggestion.value ||
+                "";
+
+          const value =
+            typeof suggestion === "string"
+              ? suggestion
+              : suggestion.value ||
+                suggestion.label ||
+                "";
+
+          button.textContent =
+            label;
+
+          button.addEventListener(
+            "click",
+            function () {
+
+              sendMessageValue(value);
+
+            }
+          );
+
+          suggestions.appendChild(button);
+
+        }
+      );
+
+      container.appendChild(
+        suggestions
+      );
+    }
+
+    /* =============================== */
+    /* CHECKOUT */
+    /* =============================== */
+
+    if (
+      data.messageType === "checkout" &&
+      data.checkoutUrl
+    ) {
+
+      const checkoutButton =
+        document.createElement("a");
+
+      checkoutButton.href =
+        data.checkoutUrl;
+
+      checkoutButton.target =
+        "_blank";
+
+      checkoutButton.rel =
+        "noopener noreferrer";
+
+      checkoutButton.className =
+        "ai-checkout-button";
+
+      checkoutButton.textContent =
+        "🛍️ Proceed to Checkout";
+
+      container.appendChild(
+        checkoutButton
+      );
+    }
+
+    /* =============================== */
+    /* SHOW MORE */
+    /* =============================== */
+
+    if (data.hasMore) {
+
+      const showMoreButton =
+        document.createElement("button");
+
+      showMoreButton.className =
+        "ai-show-more-btn";
+
+      showMoreButton.textContent =
+        "Show More";
+
+      showMoreButton.addEventListener(
+        "click",
+        function () {
+
+          sendMessageValue(
+            "show more"
+          );
+
+        }
+      );
+
+      container.appendChild(
+        showMoreButton
+      );
+    }
+
+    messages.appendChild(
+      container
+    );
+
+    messages.scrollTop =
+      messages.scrollHeight;
+  }
+
+  /* =============================== */
+  /* SEND MESSAGE */
+  /* =============================== */
+
+  async function sendMessageValue(text) {
+
+    text =
+      text.trim();
+
+    if (!text) {
+      return;
+    }
+
+    addMessage(
+      text,
+      "user"
+    );
+
+    input.value = "";
+
+    send.disabled = true;
+
+    const loading =
+      document.createElement("div");
+
+    loading.className =
+      "ai-message bot typing";
+
+    loading.textContent =
+      "Searching products...";
+
+    messages.appendChild(
+      loading
+    );
+
+    messages.scrollTop =
+      messages.scrollHeight;
+
+    try {
+
+      const response =
+        await fetch(
+          API + "/chat",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body: JSON.stringify({
+              sessionId:
+                sessionId,
+
+              message:
+                text
+            })
+          }
+        );
+
+      if (!response.ok) {
+        throw new Error(
+          "HTTP " +
+          response.status
+        );
+      }
+
+      const data =
+        await response.json();
+
+      loading.remove();
+
+      addBotResponse(
+        data
+      );
+
+    } catch (error) {
+
+      console.error(
+        "AI Sales Assistant error:",
+        error
+      );
+
+      loading.remove();
+
+      addMessage(
+        "Sorry, something went wrong. Please try again.",
+        "bot"
+      );
+
+    } finally {
+
+      send.disabled = false;
+
+      input.focus();
+    }
+  }
+
+  function sendMessage() {
+
+    sendMessageValue(
+      input.value
+    );
+
+  }
+
+  send.addEventListener(
+    "click",
+    sendMessage
+  );
+
+  input.addEventListener(
+    "keydown",
+    function (event) {
+
+      if (
+        event.key === "Enter" &&
+        !send.disabled
+      ) {
+
+        sendMessage();
+
+      }
+
+    }
+  );
+
+})();
+</script>
+
+{% schema %}
+{
+  "name": "AI Sales Chatbot",
+  "target": "body",
+  "settings": []
+}
+{% endschema %}

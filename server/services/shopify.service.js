@@ -78,11 +78,11 @@ async function fetchShopifyProducts(filters = {}) {
             }
           }
 
-          variants(first: 20) {
+          variants(first: 100) {
             edges {
               node {
                 id
-
+                availableForSale
                 price {
                   amount
                   currencyCode
@@ -118,46 +118,69 @@ async function fetchShopifyProducts(filters = {}) {
   
   let products = response.data.data.products.edges.map(({ node }) => {
 
+    const firstVariant = node.variants?.edges?.[0]?.node;
+
     return {
       title: node.title,
       vendor: node.vendor,
       productType: node.productType,
-      variantId: node.variants.edges[0]?.node.id,
+
+      variantId: firstVariant?.id || null,
+
+      variants: node.variants.edges.map(({ node: variant }) => ({
+        id: variant.id,
+        availableForSale: variant.availableForSale,
+        price: Number(variant.price.amount),
+        options: variant.selectedOptions.map(option => ({
+          name: option.name,
+          value: option.value,
+        })),
+      })),
+
       availableForSale: node.availableForSale,
       tags: node.tags || [],
       description: node.description || "",
       handle: node.handle,
+
       url:
         node.onlineStoreUrl ||
         `https://${process.env.SHOPIFY_STORE_DOMAIN}/products/${node.handle}`,
-      image: node.images.edges[0]?.node.url || "",
+
+      image:
+        node.images.edges[0]?.node.url || "",
+
       price: Number(
-        node.variants.edges[0]?.node.price.amount || 0
+        firstVariant?.price?.amount || 0
       ),
 
       colors: node.variants.edges.flatMap(({ node: variant }) =>
         variant.selectedOptions
-          .filter(option => option.name.toLowerCase() === "color")
-          .map(option => option.value.toLowerCase())
+          .filter(
+            option =>
+              option.name.toLowerCase() === "color"
+          )
+          .map(
+            option =>
+              option.value.toLowerCase()
+          )
       ),
 
-      sizes: node.variants.edges
-      .flatMap(({ node: variant }) =>
+      sizes: node.variants.edges.flatMap(({ node: variant }) =>
         variant.selectedOptions
-          .filter(option =>
-            ["size", "shoe size"].includes(option.name.toLowerCase())
+          .filter(
+            option =>
+              ["size", "shoe size"].includes(
+                option.name.toLowerCase()
+              )
           )
-          .map(option => option.value.toLowerCase())
+          .map(
+            option =>
+              option.value.toLowerCase()
+          )
       ),
     };
-
   });
 
-  console.log(
-  "PRODUCT DESCRIPTION:",
-  products[0]?.title,
-  products[0]?.description
-);
 
   // Strict keyword filtering
   if (
@@ -180,6 +203,26 @@ async function fetchShopifyProducts(filters = {}) {
       );
     });
   } 
+  
+  // Apply color filter
+  if (filters.color) {
+    products = products.filter(product =>
+      product.colors?.includes(filters.color.toLowerCase())
+    );
+  }
+
+  // Apply availability filter
+  if (filters.availability === "in-stock") {
+    products = products.filter(product =>
+      product.availableForSale === true
+    );
+  }
+
+  if (filters.availability === "out-of-stock") {
+    products = products.filter(product =>
+      product.availableForSale === false
+    );
+  }
 
   // Apply price filter
   if (typeof filters.maxPrice === "number") {
@@ -234,11 +277,11 @@ async function fetchAllShopifyProducts() {
                 }
               }
 
-              variants(first: 20) {
+              variants(first: 100) {
                 edges {
                   node {
                     id
-
+                    availableForSale
                     price {
                       amount
                       currencyCode
@@ -276,14 +319,26 @@ async function fetchAllShopifyProducts() {
     const products =
       productsConnection.edges.map(({ node }) => {
 
+        const firstVariant = node.variants?.edges?.[0]?.node;
+
         return {
           title: node.title,
           vendor: node.vendor,
           productType: node.productType,
 
-          variantId:
-            node.variants.edges[0]?.node.id,
+          // ⭐ IMPORTANT
+          variantId: firstVariant?.id || null,
 
+          variants: node.variants.edges.map(({ node: variant }) => ({
+            id: variant.id,
+            availableForSale: variant.availableForSale,
+            price: Number(variant.price.amount),
+            options: variant.selectedOptions.map(option => ({
+              name: option.name,
+              value: option.value,
+            })),
+          })),
+          
           availableForSale:
             node.availableForSale,
 
@@ -302,7 +357,7 @@ async function fetchAllShopifyProducts() {
             node.images.edges[0]?.node.url || "",
 
           price: Number(
-            node.variants.edges[0]?.node.price.amount || 0
+            firstVariant?.price?.amount || 0
           ),
 
           colors:
@@ -335,8 +390,8 @@ async function fetchAllShopifyProducts() {
                   )
             ),
         };
-
       });
+
 
     allProducts.push(...products);
 

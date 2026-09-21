@@ -19,6 +19,21 @@ function detectFollowUp(text) {
     return { type: "most-expensive" };
   }
 
+  // Buy Recommended Product
+  if (
+    text.includes("buy recommended") ||
+    text.includes("add the recommended one") ||
+    text.includes("add recommended") ||
+    text.includes("buy it") ||
+    text.includes("buy this") ||
+    text.includes("purchase it") ||
+    text.includes("take it")
+  ) {
+    return {
+      type: "buy-recommended",
+    };
+  }
+
 	// Recommend
 	if (
 		text.includes("recommend") ||
@@ -57,7 +72,7 @@ function detectFollowUp(text) {
 
   // Add to Cart
   const addToCartMatch = text.match(
-    /(add|buy|purchase).*(first|second|third|1st|2nd|3rd)|^(add|buy|purchase)( this)? to cart$/
+    /(add|buy|purchase).*(first|second|third|1st|2nd|3rd)|(add|buy|purchase)( this| it| this one| it one)? (to|in) cart$/
   );
 
   if (addToCartMatch) {
@@ -87,9 +102,14 @@ function detectFollowUp(text) {
   if (
     text.includes("tell me more") ||
     text.includes("more about") ||
+    text.includes("tell me about") ||
+    text.includes("about this product") ||
+    text.includes("about this") ||
+    text.includes("product details") ||
     text.includes("details") ||
-    text.includes("first one") ||
-    text.includes("second one")
+    text.includes("description") ||
+    text.includes("describe this") ||
+    text.includes("describe the product")
   ) {
     return {
       type: "details",
@@ -190,12 +210,25 @@ function detectFollowUp(text) {
     (
       text.startsWith("only") ||
       text.includes("show only") ||
-      text.includes("show me") ||
       text.includes("filter")
     )
   ) {
     return {
       type: "color-filter",
+      color: selectedColor,
+    };
+  }
+  // Variant Color Selection
+  if (
+    selectedColor &&
+    (
+      text === selectedColor ||
+      text.startsWith("select ") ||
+      text.startsWith("choose ")
+    )
+  ) {
+    return {
+      type: "select-color",
       color: selectedColor,
     };
   }
@@ -361,19 +394,6 @@ function detectFollowUp(text) {
   ) {
     return {
       type: "add-premium",
-    };
-  }
-
-  // Buy Recommended Product
-  if (
-    text.includes("buy recommended") ||
-    text.includes("buy it") ||
-    text.includes("buy this") ||
-    text.includes("purchase it") ||
-    text.includes("take it")
-  ) {
-    return {
-      type: "buy-recommended",
     };
   }
 

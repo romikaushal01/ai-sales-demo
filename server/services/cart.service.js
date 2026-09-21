@@ -4,11 +4,14 @@ const SHOP = process.env.SHOPIFY_STORE_DOMAIN;
 const TOKEN = process.env.SHOPIFY_STOREFRONT_TOKEN;
 
 async function createCart(variantId, quantity = 1) {
+
+  if (!variantId) {
+    throw new Error("Variant ID is missing");
+  }
+
   const query = `
-    mutation cartCreate($lines: [CartLineInput!]) {
-      cartCreate(input: {
-        lines: $lines
-      }) {
+    mutation cartCreate($input: CartInput) {
+      cartCreate(input: $input) {
         cart {
           id
           checkoutUrl
@@ -17,34 +20,97 @@ async function createCart(variantId, quantity = 1) {
           field
           message
         }
+        warnings {
+          code
+          message
+        }
       }
     }
   `;
 
   const variables = {
-    lines: [
-      {
-        merchandiseId: variantId,
-        quantity,
-      },
-    ],
+    input: {
+      lines: [
+        {
+          merchandiseId: variantId,
+          quantity,
+        },
+      ],
+    },
   };
 
-  const response = await axios.post(
-    `https://${SHOP}/api/2025-01/graphql.json`,
-    {
-      query,
-      variables,
-    },
-    {
-      headers: {
-        "X-Shopify-Storefront-Access-Token": TOKEN,
-        "Content-Type": "application/json",
-      },
-    }
-  );
+  try {
 
-  return response.data.data.cartCreate;
+    const response = await axios.post(
+      `https://${SHOP}/api/2025-01/graphql.json`,
+      {
+        query,
+        variables,
+      },
+      {
+        headers: {
+          "X-Shopify-Storefront-Access-Token": TOKEN,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    // GraphQL level error
+    if (response.data.errors) {
+
+      throw new Error(
+        response.data.errors
+          .map(error => error.message)
+          .join(", ")
+      );
+    }
+
+    const result = response.data?.data?.cartCreate;
+
+    if (!result) {
+      throw new Error(
+        "Shopify cartCreate returned no result"
+      );
+    }
+
+    // Shopify userErrors
+    if (result.userErrors?.length) {
+
+      throw new Error(
+        result.userErrors
+          .map(error => error.message)
+          .join(", ")
+      );
+    }
+
+    // Shopify warnings
+    if (result.warnings?.length) {
+      const outOfStock = result.warnings.find(
+        warning => warning.code === "MERCHANDISE_OUT_OF_STOCK"
+      );
+
+      if (outOfStock) {
+        throw new Error(outOfStock.message);
+      }
+    }
+
+    if (!result.cart) {
+      throw new Error(
+        "Shopify cart was not created"
+      );
+    }
+
+    return result;
+
+  } catch (error) {
+
+    console.error(
+      "CREATE CART ERROR:",
+      error.response?.data || error.message
+    );
+
+    throw error;
+  }
 }
 
 async function addToCart(cartId, variantId, quantity = 1) {

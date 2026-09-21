@@ -36,34 +36,40 @@ const {
 const USE_AI = false;
 async function addProductToCart(sessionId, memory, product) {
 
-  let checkoutUrl;
+    let checkoutUrl;
 
-  if (memory.cartId) {
+    if (memory.cartId) {
 
-    const cart = await addToCart(
-      memory.cartId,
-      product.variantId
-    );
+      const cart = await addToCart(
+        memory.cartId,
+        product.variantId
+      );
 
-    checkoutUrl = cart.cart.checkoutUrl;
+      updateMemory(sessionId, {
+        cartId: cart.cart.id,
+        checkoutUrl: cart.cart.checkoutUrl,
+      });
 
-  } else {
+      checkoutUrl = cart.cart.checkoutUrl;
+    }
+    else {
 
-    const cart = await createCart(product.variantId);
+        const cart = await createCart(product.variantId);
+
+        updateMemory(sessionId, {
+          cartId: cart.cart.id,
+          checkoutUrl: cart.cart.checkoutUrl,
+        });
+
+        checkoutUrl = cart.cart.checkoutUrl;
+    }
 
     updateMemory(sessionId, {
-      cartId: cart.cart.id,
-      checkoutUrl: cart.cart.checkoutUrl,
+      lastAdded: product,
     });
 
-    checkoutUrl = cart.cart.checkoutUrl;
-  }
+    return checkoutUrl;
 
-  updateMemory(sessionId, {
-    lastAdded: product,
-  });
-
-  return checkoutUrl;
 }
 
 router.post("/", async (req, res) => {
@@ -93,7 +99,20 @@ router.post("/", async (req, res) => {
 
       let memory = getMemory(sessionId);
 
-      const followUp = detectFollowUp(text);
+      let followUp = detectFollowUp(text);
+
+      // If color is already selected, a plain number means variant size
+      if (
+        memory.selectedProduct &&
+        memory.selectedColor &&
+        /^\d+$/.test(text)
+      ) {
+        followUp = {
+          type: "select-size",
+          size: text,
+        };
+      }
+
 
       // Follow-up questions
       if (followUp && memory.lastResults?.length) {
@@ -128,6 +147,47 @@ router.post("/", async (req, res) => {
           });
         }
 
+         // Buy Recommended Product
+        if (followUp.type === "buy-recommended") {
+
+          if (!memory.lastRecommended) {
+            return res.json({
+              reply: "Please ask me for a recommendation first.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const product = memory.lastRecommended;
+
+          const checkoutUrl = await addProductToCart(
+            sessionId,
+            memory,
+            product
+          );
+    
+          trackEvent({
+            event: "ADD_TO_CART",
+            sessionId,
+            productTitle: product.title,
+            productPrice: product.price,
+            productVendor: product.vendor,
+            productType: product.productType,
+          });
+
+          return res.json({
+            reply: `🛒 ${product.title} has been added to your cart.`,
+            products: [product],
+            checkoutUrl,
+            suggestions: [
+              "Show cart",
+              "Checkout",              
+            ],
+            hasMore: false,
+          });
+        }
+
         // Recommend
         if (followUp.type === "recommend") {
 
@@ -157,6 +217,10 @@ router.post("/", async (req, res) => {
             productPrice: recommended.price,
             productVendor: recommended.vendor,
             productType: recommended.productType,
+          });
+          
+          updateMemory(sessionId, {
+            lastRecommended: recommended,
           });
 
           return res.json({
@@ -221,6 +285,7 @@ router.post("/", async (req, res) => {
               suggestions: [],
               hasMore: false,
             });
+            
           }
 
           let product = memory.lastResults[0];
@@ -243,21 +308,9 @@ router.post("/", async (req, res) => {
           updateMemory(sessionId, {
             lastViewed: product,
           });
+
           return res.json({
-            reply: `📦 ${product.title}
-
-        💲 Price: $${product.price}
-
-        🏷 Brand: ${product.vendor}
-
-        📂 Category: ${category}
-
-        ${product.availableForSale ? "✅ In Stock" : "❌ Out of Stock"}
-
-        📝 Description
-
-        ${product.description || "Product details are currently unavailable."}`,
-
+            reply: "",
             products: [product],
             messageType: "details",
             suggestions: [],
@@ -445,6 +498,139 @@ router.post("/", async (req, res) => {
           hasMore: filtered.length > 5,
           });
         }
+
+        // Select Variant Color
+        if (followUp.type === "select-color") {
+
+          if (!memory.lastResults || memory.lastResults.length === 0) {
+            return res.json({
+              reply: "Please search for a product first.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const color = followUp.color.toLowerCase();
+
+          // Product select karo
+          let product = memory.lastResults[0];
+
+          // Agar user first/second/third product mention kare
+          if (text.includes("second")) {
+            product = memory.lastResults[1] || product;
+          } else if (text.includes("third")) {
+            product = memory.lastResults[2] || product;
+          }
+
+          // Product ke variants mein selected color find karo
+          const matchingVariants = (product.variants || []).filter(variant =>
+            variant.availableForSale &&
+            variant.options?.some(
+              option =>
+                option.name.toLowerCase() === "color" &&
+                option.value.toLowerCase() === color
+            )
+          );
+
+          if (!matchingVariants.length) {
+            return res.json({
+              reply: `Sorry, I couldn't find ${followUp.color} for ${product.title}.`,
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          updateMemory(sessionId, {
+            selectedProduct: product,
+            selectedColor: color,
+            selectedVariant: null,
+            pendingAction: "select-size",
+          });
+
+          const hasSize = matchingVariants.some(variant =>
+            variant.options?.some(
+              option =>
+                ["size", "shoe size"].includes(option.name.toLowerCase())
+            )
+          );
+
+          if (hasSize) {
+            return res.json({
+              reply: `🎨 ${product.title} is available in ${followUp.color}. What size would you like?`,
+              products: [product],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          // Color variant hai but size nahi hai
+          const variant = matchingVariants[0];
+
+          updateMemory(sessionId, {
+            selectedVariant: variant,
+            pendingAction: "",
+          });
+
+          return res.json({
+            reply: `🎨 ${product.title} in ${followUp.color} is available. You can say "add it to cart".`,
+            products: [product],
+            suggestions: ["Add it to cart"],
+            hasMore: false,
+          });
+        }
+
+        // Select Variant Size
+        if (followUp.type === "select-size") {
+
+          if (!memory.selectedProduct || !memory.selectedColor) {
+            return res.json({
+              reply: "Please select a product and color first.",
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          const product = memory.selectedProduct;
+          const color = memory.selectedColor;
+          const size = followUp.size.toLowerCase();
+
+          const matchingVariant = (product.variants || []).find(variant =>
+            variant.options?.some(
+              option =>
+                option.name.toLowerCase() === "color" &&
+                option.value.toLowerCase() === color
+            ) &&
+            variant.options?.some(
+              option =>
+                ["size", "shoe size"].includes(option.name.toLowerCase()) &&
+                option.value.toLowerCase() === size
+            )
+          );
+
+          if (!matchingVariant) {
+            return res.json({
+              reply: `Sorry, ${product.title} is not available in ${color}, size ${size}.`,
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
+
+          updateMemory(sessionId, {
+            selectedVariant: matchingVariant,
+            pendingAction: "",
+          });
+
+          return res.json({
+            reply: `👟 ${product.title} in ${color}, size ${size} is available. You can say "add it to cart".`,
+            products: [product],
+            suggestions: ["Add it to cart"],
+            hasMore: false,
+          });
+        }
       
         // Add to Cart
         if (followUp.type === "add-to-cart") {
@@ -458,7 +644,8 @@ router.post("/", async (req, res) => {
             });
           }
 
-          const product = memory.lastResults[followUp.index];
+          let product = memory.lastResults[followUp.index];
+
           if (!product) {
             return res.json({
               reply: "I couldn't find that product.",
@@ -468,11 +655,29 @@ router.post("/", async (req, res) => {
             });
           }
 
-          const checkoutUrl = await addProductToCart(
-            sessionId,
-            memory,
-            product
-          );
+          if (memory.selectedVariant) {
+            product = {
+              ...product,
+              variantId: memory.selectedVariant.id,
+            };
+          }
+
+          let checkoutUrl;
+
+          try {
+            checkoutUrl = await addProductToCart(
+              sessionId,
+              memory,
+              product
+            );
+          } catch (error) {
+            return res.json({
+              reply: `❌ ${error.message}`,
+              products: [],
+              suggestions: [],
+              hasMore: false,
+            });
+          }
 
           // Track Add To Cart
           trackEvent({
@@ -495,6 +700,7 @@ router.post("/", async (req, res) => {
 
         // Show Cart
         if (followUp.type === "show-cart") {
+          memory = getMemory(sessionId);
 
           if (!memory.cartId) {
             return res.json({
@@ -507,16 +713,21 @@ router.post("/", async (req, res) => {
 
           const cart = await getCart(memory.cartId);
 
-          if (cart.lines.edges.length === 0) {
+          const validLines = cart.lines.edges.filter(
+            ({ node }) => node.quantity > 0
+          );
+
+          if (validLines.length === 0) {
             return res.json({
               reply: "🛒 Your cart is empty.",
+              products: [],
               items: [],
               suggestions: [],
               hasMore: false,
             });
           }
 
-          const items = cart.lines.edges.map(({ node }) => ({
+          const items = validLines.map(({ node }) => ({
             title: node.merchandise.product.title,
             variant: node.merchandise.title,
             quantity: node.quantity,
@@ -524,6 +735,7 @@ router.post("/", async (req, res) => {
             currency: node.merchandise.price.currencyCode,
             image: node.merchandise.image?.url,
           }));
+
            
           const totalItems = items.reduce(
             (sum, item) => sum + item.quantity,
@@ -870,55 +1082,14 @@ router.post("/", async (req, res) => {
           });
         }
 
-        // Buy Recommended Product
-        if (followUp.type === "buy-recommended") {
-
-          if (!memory.lastRecommended) {
-            return res.json({
-              reply: "Please ask me for a recommendation first.",
-              products: [],
-              suggestions: [],
-              hasMore: false,
-            });
-          }
-
-          const product = memory.lastRecommended;
-
-          const checkoutUrl = await addProductToCart(
-            sessionId,
-            memory,
-            product
-          );
-    
-          trackEvent({
-            event: "ADD_TO_CART",
-            sessionId,
-            productTitle: product.title,
-            productPrice: product.price,
-            productVendor: product.vendor,
-            productType: product.productType,
-          });
-
-          return res.json({
-            reply: `🛒 ${product.title} has been added to your cart.`,
-            products: [product],
-            checkoutUrl,
-            suggestions: [
-              "Show cart",
-              "Checkout",              
-            ],
-            hasMore: false,
-          });
-        }
-
       }
 
-      // User said YES
-      if (
-        conversation &&
-        conversation.type === "yes" &&
-        memory.pendingAction === "show-best-sellers"
-      ) {
+        // User said YES
+        if (
+          conversation &&
+          conversation.type === "yes" &&
+          memory.pendingAction === "show-best-sellers"
+        ) {
 
         clearMemory(sessionId);
 

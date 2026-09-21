@@ -40,8 +40,8 @@ app.use(express.json());
 // Routes
 app.use("/chat", require("./routes/query.routes"));
 
+app.use("/analytics", analyticsRoutes);
+
 app.listen(PORT, () => {
   console.log(`✅ Server running on ${PORT}`);
 });
-
-app.use("/analytics", analyticsRoutes);
