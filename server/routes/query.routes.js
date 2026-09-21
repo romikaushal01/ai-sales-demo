@@ -1277,7 +1277,7 @@ router.post("/", async (req, res) => {
     }
 
   } catch (err) {
-    console.log(err);
+    console.error("CHAT ROUTE ERROR:", err.message);
 
     return res.json({
       reply: "Something went wrong.",
