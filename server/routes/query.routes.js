@@ -1249,7 +1249,7 @@ router.post("/", async (req, res) => {
         !isShowMore &&
         mergedFilters.page === 1
       ) {
-        trackEvent({
+        await trackEvent({
           event: "SEARCH_PRODUCT",
           sessionId,
           query: text,
