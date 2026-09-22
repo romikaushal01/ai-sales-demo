@@ -1255,6 +1255,7 @@ router.post("/", async (req, res) => {
         !isShowMore &&
         mergedFilters.page === 1
       ) {
+        console.log("🚀 CALLING TRACK EVENT");
         await trackEvent({
           event: "SEARCH_PRODUCT",
           sessionId,
@@ -1268,6 +1269,7 @@ router.post("/", async (req, res) => {
           sort: mergedFilters.sort || "",
           maxPrice: mergedFilters.maxPrice ?? null,
         });
+        console.log("✅ TRACK EVENT FINISHED");
       }
 
      // ✅ Save AFTER buildResponse
