@@ -1,7 +1,4 @@
 {
   "watch": ["."],
-  "ext": "js,mjs,cjs",
-  "ignore": [
-    "analytics/events.json"
-  ]
+  "ext": "js,mjs,cjs"
 }

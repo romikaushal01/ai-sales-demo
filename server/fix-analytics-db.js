@@ -31,9 +31,7 @@ async function fixDatabase() {
       );
     `);
 
-    console.log("✅ analytics_events table recreated successfully");
   } catch (error) {
-    console.error("❌ Database migration failed:", error.message);
   } finally {
     await pool.end();
   }

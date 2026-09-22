@@ -1,36 +1,5 @@
 const pool = require("../db");
 
-function readEvents() {
-  if (!fs.existsSync(EVENTS_FILE)) {
-    return [];
-  }
-
-  const data = fs.readFileSync(EVENTS_FILE, "utf8");
-
-  return data ? JSON.parse(data) : [];
-}
-
-function writeEvents(events) {
-  fs.writeFileSync(
-    EVENTS_FILE,
-    JSON.stringify(events, null, 2)
-  );
-}
-
-function countBy(events, eventName, field) {
-  const counts = {};
-
-  events
-    .filter(e => e.event === eventName && e[field])
-    .forEach(e => {
-      counts[e[field]] = (counts[e[field]] || 0) + 1;
-    });
-
-  return Object.entries(counts)
-    .map(([value, count]) => ({ value, count }))
-    .sort((a, b) => b.count - a.count);
-}
-
 async function trackEvent(event) {
   try {
     await pool.query(
@@ -90,120 +59,9 @@ async function trackEvent(event) {
       ]
     );
 
-    console.log("✅ Analytics event saved:", event.event);
   } catch (error) {
     console.error("❌ Analytics event failed:", error.message);
   }
-}
-
-// function buildTrend(events) {
-//   const trends = {};
-
-//   events.forEach(event => {
-//     const date = new Date(event.timestamp)
-//       .toISOString()
-//       .split("T")[0];
-
-//     if (!trends[date]) {
-//       trends[date] = {
-//         date,
-//         searches: 0,
-//         recommendations: 0,
-//         addToCart: 0,
-//         checkout: 0,
-//       };
-//     }
-
-//     if (event.event === "SEARCH_PRODUCT") {
-//       trends[date].searches++;
-//     }
-
-//     if (event.event === "RECOMMEND_PRODUCT") {
-//       trends[date].recommendations++;
-//     }
-
-//     if (event.event === "ADD_TO_CART") {
-//       trends[date].addToCart++;
-//     }
-
-//     if (event.event === "CHECKOUT_CLICK") {
-//       trends[date].checkout++;
-//     }
-//   });
-
-//   return Object.values(trends).sort(
-//     (a, b) => a.date.localeCompare(b.date)
-//   );
-// }
-
-function buildTrend(events, period = "all") {
-  const trends = {};
-
-  events.forEach(event => {
-    const date = new Date(event.timestamp)
-      .toISOString()
-      .split("T")[0];
-
-    if (!trends[date]) {
-      trends[date] = {
-        date,
-        searches: 0,
-        recommendations: 0,
-        addToCart: 0,
-        checkout: 0,
-      };
-    }
-
-    if (event.event === "SEARCH_PRODUCT") {
-      trends[date].searches++;
-    }
-
-    if (event.event === "RECOMMEND_PRODUCT") {
-      trends[date].recommendations++;
-    }
-
-    if (event.event === "ADD_TO_CART") {
-      trends[date].addToCart++;
-    }
-
-    if (event.event === "CHECKOUT_CLICK") {
-      trends[date].checkout++;
-    }
-  });
-
-  if (period === "7days" || period === "30days") {
-    const days = period === "7days" ? 7 : 30;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const result = [];
-
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-
-      const dateKey = date
-        .toISOString()
-        .split("T")[0];
-
-      result.push(
-        trends[dateKey] || {
-          date: dateKey,
-          searches: 0,
-          recommendations: 0,
-          addToCart: 0,
-          checkout: 0,
-        }
-      );
-    }
-
-    return result;
-  }
-
-  return Object.values(trends).sort(
-    (a, b) => a.date.localeCompare(b.date)
-  );
 }
 
 async function getAnalytics(period = "all") {
