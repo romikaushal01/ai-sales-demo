@@ -8,6 +8,8 @@ require("dotenv").config({
   path: path.resolve(__dirname, "../.env"),
 });
 
+require("./db");
+
 const express = require("express");
 const cors = require("cors");
 
