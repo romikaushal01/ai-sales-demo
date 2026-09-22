@@ -7,12 +7,14 @@ const {
 } = require("./analytics.service");
 
 
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
+
   const period = req.query.period || "all";
 
-  const analytics = getAnalytics(period);
+  const analytics = await getAnalytics(period);
 
   res.json(analytics);
+
 });
 
 module.exports = router;
