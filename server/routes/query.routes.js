@@ -1244,6 +1244,12 @@ router.post("/", async (req, res) => {
       );
 
       // ✅ Track Search Event
+
+      console.log("🔍 SEARCH ANALYTICS CHECK:", {
+  followUp,
+  isShowMore,
+  page: mergedFilters.page,
+});
       if (
         !followUp &&
         !isShowMore &&
